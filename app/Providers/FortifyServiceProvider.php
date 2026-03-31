@@ -47,24 +47,34 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
+        Fortify::loginView(fn (Request $request) => tap(Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
-        ]));
+        ]), fn () => $this->flashStatusToast(
+            $request,
+            'A new verification link has been sent to the email address you provided during registration.',
+        )));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
             'token' => $request->route('token'),
         ]));
 
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::requestPasswordResetLinkView(fn (Request $request) => tap(
+            Inertia::render('auth/forgot-password'),
+            fn () => $this->flashStatusToast(
+                $request,
+                'A new verification link has been sent to the email address you provided during registration.',
+            ),
+        ));
 
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::verifyEmailView(fn (Request $request) => tap(
+            Inertia::render('auth/verify-email'),
+            fn () => $this->flashStatusToast(
+                $request,
+                'A new verification link has been sent to the email address you provided during registration.',
+            ),
+        ));
 
         Fortify::registerView(fn () => Inertia::render('auth/register'));
 
@@ -87,5 +97,21 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+    }
+
+    private function flashStatusToast(Request $request, string $verificationMessage): void
+    {
+        $status = $request->session()->get('status');
+
+        if (! is_string($status) || $status === '') {
+            return;
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $status === Fortify::VERIFICATION_LINK_SENT
+                ? $verificationMessage
+                : __($status),
+        ]);
     }
 }

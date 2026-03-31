@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Fortify\Fortify;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -82,4 +84,18 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('profile page converts verification status into inertia flash data', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)
+        ->withSession(['status' => Fortify::VERIFICATION_LINK_SENT])
+        ->get(route('profile.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/profile')
+            ->hasFlash('toast.type', 'success')
+            ->hasFlash('toast.message', 'A new verification link has been sent to your email address.')
+            ->missing('status'),
+        );
 });

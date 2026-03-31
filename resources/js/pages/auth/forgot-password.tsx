@@ -9,16 +9,10 @@ import { Label } from '@/components/ui/label';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
-export default function ForgotPassword({ status }: { status?: string }) {
+export default function ForgotPassword() {
     return (
         <>
             <Head title="Forgot password" />
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
 
             <div className="space-y-6">
                 <Form {...email.form()}>

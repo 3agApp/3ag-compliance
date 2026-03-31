@@ -19,9 +19,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $this->flashStatusToast($request);
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
         ]);
     }
 
@@ -56,5 +57,19 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function flashStatusToast(Request $request): void
+    {
+        $status = $request->session()->get('status');
+
+        if ($status !== 'verification-link-sent') {
+            return;
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'A new verification link has been sent to your email address.',
+        ]);
     }
 }

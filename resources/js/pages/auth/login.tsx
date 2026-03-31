@@ -12,16 +12,11 @@ import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
 type Props = {
-    status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
 };
 
-export default function Login({
-    status,
-    canResetPassword,
-    canRegister,
-}: Props) {
+export default function Login({ canResetPassword, canRegister }: Props) {
     return (
         <>
             <Head title="Log in" />
@@ -105,12 +100,6 @@ export default function Login({
                     </>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </>
     );
 }

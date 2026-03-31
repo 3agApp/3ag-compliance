@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Support\Facades\RateLimiter;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
@@ -79,4 +81,15 @@ test('users are rate limited', function () {
     ]);
 
     $response->assertTooManyRequests();
+});
+
+test('login screen converts status messages into inertia flash data', function () {
+    $this->withSession(['status' => PasswordBroker::PASSWORD_RESET])
+        ->get(route('login'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('auth/login')
+            ->hasFlash('toast.type', 'success')
+            ->hasFlash('toast.message', __('passwords.reset'))
+            ->missing('status'),
+        );
 });

@@ -2,7 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -75,4 +77,15 @@ test('password cannot be reset with invalid token', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
+});
+
+test('forgot password screen converts status messages into inertia flash data', function () {
+    $this->withSession(['status' => PasswordBroker::RESET_LINK_SENT])
+        ->get(route('password.request'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('auth/forgot-password')
+            ->hasFlash('toast.type', 'success')
+            ->hasFlash('toast.message', __('passwords.sent'))
+            ->missing('status'),
+        );
 });
