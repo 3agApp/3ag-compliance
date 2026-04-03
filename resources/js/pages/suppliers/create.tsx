@@ -20,7 +20,7 @@ export default function SuppliersCreate() {
                     </Button>
                 </div>
 
-                <div className="max-w-2xl rounded-xl border p-6">
+                <div className="rounded-xl border p-6">
                     <SupplierForm
                         formProps={store.form()}
                         submitLabel="Create Supplier"

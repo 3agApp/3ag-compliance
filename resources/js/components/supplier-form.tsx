@@ -19,7 +19,7 @@ export default function SupplierForm({ formProps, supplier, submitLabel }: Props
         <Form {...formProps} className="space-y-6">
             {({ processing, errors }) => (
                 <>
-                    <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 sm:items-start">
                         <div className="grid gap-2">
                             <Label htmlFor="supplier_code">Supplier Code</Label>
                             <Input
