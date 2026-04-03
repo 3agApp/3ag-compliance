@@ -68,22 +68,12 @@ class SupplierController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Supplier $supplier): Response
-    {
-        return Inertia::render('suppliers/show', [
-            'supplier' => $supplier,
-        ]);
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Supplier $supplier): Response
     {
         return Inertia::render('suppliers/edit', [
-            'supplier' => $supplier,
+            'supplier' => $supplier->load('brands'),
         ]);
     }
 

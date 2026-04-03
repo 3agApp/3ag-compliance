@@ -1,3 +1,11 @@
+export type Brand = {
+    id: number;
+    supplier_id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+};
+
 export type Supplier = {
     id: number;
     supplier_code: string;
@@ -10,6 +18,7 @@ export type Supplier = {
     kontor_id: string | null;
     created_at: string;
     updated_at: string;
+    brands?: Brand[];
 };
 
 export type SupplierFormData = {

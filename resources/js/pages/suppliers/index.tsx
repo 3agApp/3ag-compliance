@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
@@ -19,7 +19,6 @@ import {
     destroy,
     edit,
     index,
-    show,
 } from '@/routes/suppliers';
 import type { PaginatedData, Supplier } from '@/types';
 
@@ -232,15 +231,6 @@ return;
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                >
-                                                    <Link href={show(supplier.id)}>
-                                                        <Eye className="size-4" />
-                                                    </Link>
-                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

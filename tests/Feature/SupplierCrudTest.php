@@ -63,14 +63,6 @@ it('validates email format on store', function () {
     ])->assertSessionHasErrors(['email']);
 });
 
-it('displays a single supplier', function () {
-    $supplier = Supplier::factory()->create();
-
-    $this->get(route('suppliers.show', $supplier))
-        ->assertSuccessful()
-        ->assertInertia(fn (Assert $page) => $page->component('suppliers/show'));
-});
-
 it('displays the edit supplier form', function () {
     $supplier = Supplier::factory()->create();
 
