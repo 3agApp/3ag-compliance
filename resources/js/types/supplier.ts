@@ -12,6 +12,17 @@ export type Supplier = {
     updated_at: string;
 };
 
+export type SupplierFormData = {
+    supplier_code: string;
+    name: string;
+    address: string;
+    country: string;
+    email: string;
+    phone: string;
+    active: boolean;
+    kontor_id: string;
+};
+
 export type PaginatedData<T> = {
     data: T[];
     current_page: number;

@@ -1,9 +1,9 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import Heading from '@/components/heading';
-import SupplierForm from '@/components/supplier-form';
+import SupplierFormFields from '@/components/supplier-form';
 import { Button } from '@/components/ui/button';
 import { edit, index, update } from '@/routes/suppliers';
-import type { Supplier } from '@/types';
+import type { Supplier, SupplierFormData } from '@/types';
 
 type Props = {
     supplier: Supplier;
@@ -26,11 +26,19 @@ export default function SuppliersEdit({ supplier }: Props) {
                 </div>
 
                 <div className="rounded-xl border p-6">
-                    <SupplierForm
-                        formProps={update.form(supplier.id)}
-                        supplier={supplier}
-                        submitLabel="Update Supplier"
-                    />
+                    <Form<SupplierFormData>
+                        {...update.form(supplier.id)}
+                        className="space-y-6"
+                    >
+                        {({ processing, errors }) => (
+                            <SupplierFormFields
+                                errors={errors}
+                                processing={processing}
+                                supplier={supplier}
+                                submitLabel="Update Supplier"
+                            />
+                        )}
+                    </Form>
                 </div>
             </div>
         </>
