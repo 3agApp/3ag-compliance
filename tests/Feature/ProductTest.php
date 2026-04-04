@@ -73,6 +73,21 @@ it('generates a public uuid automatically', function () {
     expect(Str::isUuid($product->public_uuid))->toBeTrue();
 });
 
+it('provides labels and options for product statuses', function () {
+    expect(ProductStatus::InProgress->label())->toBe('In progress')
+        ->and(ProductStatus::ClarificationNeeded->label())->toBe('Clarification needed')
+        ->and(ProductStatus::options())->toBe([
+            'open' => 'Open',
+            'in_progress' => 'In progress',
+            'submitted' => 'Submitted',
+            'under_review' => 'Under review',
+            'clarification_needed' => 'Clarification needed',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'completed' => 'Completed',
+        ]);
+});
+
 it('nulls nullable foreign keys when the supplier or brand is deleted', function () {
     $supplier = Supplier::factory()->create();
     $brand = Brand::factory()->for($supplier)->create();
