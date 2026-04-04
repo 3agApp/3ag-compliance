@@ -6,6 +6,8 @@ use App\Models\Product;
 use App\Models\Supplier;
 use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 it('requires a name', function () {
@@ -102,4 +104,24 @@ it('nulls nullable foreign keys when the supplier or brand is deleted', function
 
     expect($product->fresh()?->supplier_id)->toBeNull()
         ->and($product->fresh()?->brand_id)->toBeNull();
+});
+
+it('stores a product image in a single file media collection', function () {
+    Storage::fake('public');
+
+    $product = Product::create([
+        'name' => 'Imaged Product',
+    ]);
+
+    $firstImage = UploadedFile::fake()->image('first-image.jpg');
+    $secondImage = UploadedFile::fake()->image('second-image.jpg');
+
+    $product->addMedia($firstImage)->toMediaCollection('image');
+    $product->addMedia($secondImage)->toMediaCollection('image');
+
+    $product->refresh();
+
+    expect($product->getMedia('image'))->toHaveCount(1)
+        ->and($product->getFirstMedia('image')?->file_name)->toBe('second-image.jpg')
+        ->and($product->getFirstMedia('image')?->disk)->toBe('public');
 });
