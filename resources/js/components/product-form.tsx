@@ -41,6 +41,7 @@ export default function ProductFormFields({
     const [imagePreview, setImagePreview] = useState<string | null>(
         product?.image_url ?? null,
     );
+    const [removeImage, setRemoveImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const filteredBrands = useMemo(
@@ -231,6 +232,7 @@ export default function ProductFormFields({
                             />
                         )}
                         <div className="flex flex-1 flex-col gap-2">
+                            <input type="hidden" name="remove_image" value={removeImage ? '1' : '0'} />
                             <Input
                                 ref={fileInputRef}
                                 id="image"
@@ -241,6 +243,7 @@ export default function ProductFormFields({
                                     const file = e.target.files?.[0];
                                     if (file) {
                                         setImagePreview(URL.createObjectURL(file));
+                                        setRemoveImage(false);
                                     }
                                 }}
                             />
@@ -250,6 +253,7 @@ export default function ProductFormFields({
                                     className="self-start text-sm text-destructive hover:underline"
                                     onClick={() => {
                                         setImagePreview(null);
+                                        setRemoveImage(true);
                                         if (fileInputRef.current) {
                                             fileInputRef.current.value = '';
                                         }

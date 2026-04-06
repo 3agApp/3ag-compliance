@@ -108,10 +108,12 @@ class ProductController extends Controller
      */
     public function update(ProductUpdateRequest $request, Product $product): RedirectResponse
     {
-        $product->update($request->safe()->except('image'));
+        $product->update($request->safe()->except(['image', 'remove_image']));
 
         if ($request->hasFile('image')) {
             $product->addMediaFromRequest('image')->toMediaCollection('image');
+        } elseif ($request->boolean('remove_image')) {
+            $product->clearMediaCollection('image');
         }
 
         Inertia::flash('toast', [

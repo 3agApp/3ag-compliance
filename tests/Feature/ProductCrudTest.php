@@ -258,3 +258,19 @@ it('includes image_url in product edit data', function () {
             ->where('product.image_url', fn ($value) => str_contains($value, 'edit-test'))
         );
 });
+
+it('removes the product image when remove_image is set', function () {
+    Storage::fake('public');
+
+    $product = Product::factory()->create();
+    $product->addMedia(UploadedFile::fake()->image('to-remove.jpg'))->toMediaCollection('image');
+
+    expect($product->getFirstMediaUrl('image'))->not->toBeEmpty();
+
+    $this->put(route('products.update', $product), [
+        'name' => $product->name,
+        'remove_image' => '1',
+    ])->assertRedirect(route('products.index'));
+
+    expect($product->fresh()->getFirstMediaUrl('image'))->toBeEmpty();
+});
