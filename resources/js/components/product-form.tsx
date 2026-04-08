@@ -40,6 +40,9 @@ export default function ProductFormFields({
     const [brandId, setBrandId] = useState<string>(
         product?.brand_id?.toString() ?? '',
     );
+    const [categoryId, setCategoryId] = useState<string>(
+        product?.category_id?.toString() ?? '',
+    );
 
     const filteredBrands = useMemo(
         () =>
@@ -187,16 +190,20 @@ export default function ProductFormFields({
 
                 <div className="grid gap-2">
                     <Label htmlFor="category_id">Category</Label>
+                    <input type="hidden" name="category_id" value={categoryId} />
                     <Select
-                        name="category_id"
-                        defaultValue={
-                            product?.category_id?.toString() ?? ''
+                        value={categoryId || '__placeholder__'}
+                        onValueChange={(value) =>
+                            setCategoryId(value === '__placeholder__' ? '' : value)
                         }
                     >
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="__placeholder__" disabled>
+                                Select a category
+                            </SelectItem>
                             {categories.map((category) => (
                                 <SelectItem
                                     key={category.id}
