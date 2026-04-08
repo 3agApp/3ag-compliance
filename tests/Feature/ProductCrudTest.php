@@ -2,6 +2,7 @@
 
 use App\Enums\ProductStatus;
 use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
@@ -39,6 +40,7 @@ it('displays the create product form', function () {
 it('stores a new product', function () {
     $supplier = Supplier::factory()->create();
     $brand = Brand::factory()->for($supplier)->create();
+    $category = Category::factory()->create();
 
     $this->post(route('products.store'), [
         'name' => 'Test Product',
@@ -48,6 +50,7 @@ it('stores a new product', function () {
         'ean' => '4006381333931',
         'supplier_id' => $supplier->id,
         'brand_id' => $brand->id,
+        'category_id' => $category->id,
         'status' => ProductStatus::Open->value,
         'kontor_id' => 'KON-0001',
     ])->assertRedirect(route('products.index'));
@@ -61,14 +64,17 @@ it('stores a new product', function () {
 
 it('validates required fields on store', function () {
     $this->post(route('products.store'), [])
-        ->assertSessionHasErrors(['name']);
+        ->assertSessionHasErrors(['name', 'category_id']);
 });
 
 it('stores a product without supplier and brand', function () {
+    $category = Category::factory()->create();
+
     $this->post(route('products.store'), [
         'name' => 'Standalone Product',
         'supplier_id' => '',
         'brand_id' => '',
+        'category_id' => $category->id,
         'status' => ProductStatus::Open->value,
     ])->assertRedirect(route('products.index'));
 
@@ -78,8 +84,11 @@ it('stores a product without supplier and brand', function () {
 });
 
 it('validates supplier exists on store', function () {
+    $category = Category::factory()->create();
+
     $this->post(route('products.store'), [
         'name' => 'Test Product',
+        'category_id' => $category->id,
         'supplier_id' => 99999,
     ])->assertSessionHasErrors(['supplier_id']);
 });
@@ -98,6 +107,7 @@ it('updates an existing product', function () {
     $this->put(route('products.update', $product), [
         'name' => 'Updated Product Name',
         'ean' => '1234567890123',
+        'category_id' => $product->category_id,
         'status' => ProductStatus::InProgress->value,
     ])->assertRedirect(route('products.index'));
 
@@ -111,7 +121,7 @@ it('validates required fields on update', function () {
     $product = Product::factory()->create();
 
     $this->put(route('products.update', $product), [])
-        ->assertSessionHasErrors(['name']);
+        ->assertSessionHasErrors(['name', 'category_id']);
 });
 
 it('deletes a product', function () {

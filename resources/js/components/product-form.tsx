@@ -197,7 +197,6 @@ export default function ProductFormFields({
                             <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">None</SelectItem>
                             {categories.map((category) => (
                                 <SelectItem
                                     key={category.id}

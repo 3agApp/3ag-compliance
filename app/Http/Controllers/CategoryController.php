@@ -96,6 +96,15 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): RedirectResponse
     {
+        if ($category->products()->exists()) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Category cannot be deleted while products are assigned to it.',
+            ]);
+
+            return to_route('categories.index');
+        }
+
         $category->delete();
 
         Inertia::flash('toast', [

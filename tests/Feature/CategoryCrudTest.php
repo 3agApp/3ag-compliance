@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -100,6 +101,18 @@ it('deletes a category', function () {
         ->assertRedirect(route('categories.index'));
 
     $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+});
+
+it('does not delete a category with assigned products', function () {
+    $category = Category::factory()->create();
+    Product::factory()->for($category)->create();
+
+    $this->delete(route('categories.destroy', $category))
+        ->assertRedirect(route('categories.index'))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'Category cannot be deleted while products are assigned to it.');
+
+    $this->assertDatabaseHas('categories', ['id' => $category->id]);
 });
 
 it('filters categories by search term', function () {

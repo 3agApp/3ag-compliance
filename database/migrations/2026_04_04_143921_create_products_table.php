@@ -2,6 +2,7 @@
 
 use App\Enums\ProductStatus;
 use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Supplier;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->string('ean')->nullable();
             $table->foreignIdFor(Supplier::class)->nullable()->constrained()->nullOnDelete();
             $table->foreignIdFor(Brand::class)->nullable()->constrained()->nullOnDelete();
+            $table->foreignIdFor(Category::class)->constrained()->restrictOnDelete();
             $table->string('status')->nullable()->default(ProductStatus::Open->value);
             $table->string('kontor_id')->nullable();
             $table->timestamp('source_last_sync_at')->nullable();
