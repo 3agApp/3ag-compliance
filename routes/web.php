@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\ProductImageController;
+use App\Http\Controllers\ProductSafetyEntryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,7 @@ Route::middleware(['auth', 'verified'])->scopeBindings()->group(function () {
     Route::post('products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
     Route::delete('products/{product}/images/{media}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
     Route::put('products/{product}/images/reorder', [ProductImageController::class, 'reorder'])->name('products.images.reorder');
+    Route::put('products/{product}/safety-entry', [ProductSafetyEntryController::class, 'update'])->name('products.safety-entry.update');
 });
 
 require __DIR__.'/settings.php';

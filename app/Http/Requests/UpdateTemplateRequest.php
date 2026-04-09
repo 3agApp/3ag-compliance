@@ -28,6 +28,7 @@ class UpdateTemplateRequest extends FormRequest
         $this->merge([
             'required_document_types' => is_array($this->required_document_types) ? $this->required_document_types : [],
             'optional_document_types' => is_array($this->optional_document_types) ? $this->optional_document_types : [],
+            'required_data_fields' => is_array($this->required_data_fields) ? $this->required_data_fields : [],
         ]);
     }
 
@@ -40,6 +41,12 @@ class UpdateTemplateRequest extends FormRequest
             'required_document_types.*' => ['string', Rule::in(array_column(DocumentType::cases(), 'value'))],
             'optional_document_types' => ['present', 'array'],
             'optional_document_types.*' => ['string', Rule::in(array_column(DocumentType::cases(), 'value'))],
+            'required_data_fields' => ['present', 'array'],
+            'required_data_fields.*' => ['string', Rule::in([
+                'safety_text', 'warning_text', 'age_grading',
+                'material_information', 'usage_restrictions',
+                'safety_instructions', 'additional_notes',
+            ])],
         ];
     }
 

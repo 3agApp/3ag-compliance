@@ -27,6 +27,20 @@ export type ProductDocument = ProductDocumentVersion & {
     history: ProductDocumentVersion[];
 };
 
+export type ProductSafetyEntry = {
+    id: number;
+    product_id: number;
+    safety_text: string | null;
+    warning_text: string | null;
+    age_grading: string | null;
+    material_information: string | null;
+    usage_restrictions: string | null;
+    safety_instructions: string | null;
+    additional_notes: string | null;
+    created_at: string;
+    updated_at: string;
+};
+
 export type Product = {
     id: number;
     name: string;
@@ -48,10 +62,11 @@ export type Product = {
     image_preview_url: string | null;
     images?: ProductImage[];
     documents?: ProductDocument[];
+    safety_entry?: ProductSafetyEntry | null;
     supplier?: { id: number; name: string } | null;
     brand?: { id: number; name: string } | null;
     category?: { id: number; name: string } | null;
-    template?: { id: number; name: string } | null;
+    template?: { id: number; name: string; required_data_fields?: string[] } | null;
 };
 
 export type ProductFormData = {

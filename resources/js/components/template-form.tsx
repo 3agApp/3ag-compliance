@@ -17,7 +17,7 @@ import type { Template, TemplateFormData } from '@/types';
 type Requirement = 'none' | 'required' | 'optional';
 
 type Props = {
-    errors: Partial<Record<keyof TemplateFormData | `required_document_types.${number}` | `optional_document_types.${number}`, string>>;
+    errors: Partial<Record<keyof TemplateFormData | `required_document_types.${number}` | `optional_document_types.${number}` | `required_data_fields.${number}`, string>>;
     processing: boolean;
     template?: Template;
     categories: { id: number; name: string }[];
@@ -43,6 +43,16 @@ function buildInitialAssignments(
     return assignments;
 }
 
+const DATA_FIELDS: { value: string; label: string }[] = [
+    { value: 'safety_text', label: 'Safety notice text' },
+    { value: 'warning_text', label: 'Warning text' },
+    { value: 'age_grading', label: 'Age grading' },
+    { value: 'material_information', label: 'Material information' },
+    { value: 'usage_restrictions', label: 'Usage restrictions' },
+    { value: 'safety_instructions', label: 'Safety instructions' },
+    { value: 'additional_notes', label: 'Additional notes' },
+];
+
 export default function TemplateFormFields({
     errors,
     processing,
@@ -62,6 +72,9 @@ export default function TemplateFormFields({
                 template?.optional_document_types ?? [],
             ),
     );
+    const [selectedDataFields, setSelectedDataFields] = useState<Set<string>>(
+        () => new Set(template?.required_data_fields ?? []),
+    );
 
     const requiredTypes = Object.entries(assignments)
         .filter(([, v]) => v === 'required')
@@ -73,6 +86,20 @@ export default function TemplateFormFields({
     function handleAssignmentChange(docType: string, value: Requirement) {
         setAssignments((prev) => ({ ...prev, [docType]: value }));
     }
+
+    function handleDataFieldToggle(field: string, checked: boolean) {
+        setSelectedDataFields((prev) => {
+            const next = new Set(prev);
+            if (checked) {
+                next.add(field);
+            } else {
+                next.delete(field);
+            }
+            return next;
+        });
+    }
+
+    const requiredDataFields = Array.from(selectedDataFields);
 
     return (
         <>
@@ -183,6 +210,50 @@ export default function TemplateFormFields({
 
                     <InputError message={errors.required_document_types} />
                     <InputError message={errors.optional_document_types} />
+                </div>
+
+                <div className="space-y-4 sm:col-span-2">
+                    <Label>Required Data Fields</Label>
+                    <p className="text-sm text-muted-foreground">
+                        Select which safety data fields are required for products using this template.
+                    </p>
+
+                    {requiredDataFields.map((field) => (
+                        <input
+                            key={`df-${field}`}
+                            type="hidden"
+                            name="required_data_fields[]"
+                            value={field}
+                        />
+                    ))}
+                    {requiredDataFields.length === 0 && (
+                        <input type="hidden" name="required_data_fields" value="" />
+                    )}
+
+                    <div className="rounded-lg border">
+                        <div className="grid grid-cols-[1fr_5rem] items-center gap-4 border-b bg-muted/50 px-4 py-2.5 text-sm font-medium">
+                            <span>Data Field</span>
+                            <span className="text-center">Required</span>
+                        </div>
+                        {DATA_FIELDS.map(({ value, label }) => (
+                            <div
+                                key={value}
+                                className="grid grid-cols-[1fr_5rem] items-center gap-4 border-b px-4 py-2.5 last:border-0"
+                            >
+                                <span className="text-sm">{label}</span>
+                                <div className="flex justify-center">
+                                    <Checkbox
+                                        checked={selectedDataFields.has(value)}
+                                        onCheckedChange={(checked) =>
+                                            handleDataFieldToggle(value, !!checked)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <InputError message={errors.required_data_fields} />
                 </div>
             </div>
 

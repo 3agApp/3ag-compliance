@@ -4,6 +4,7 @@ export type Template = {
     name: string;
     required_document_types: string[];
     optional_document_types: string[];
+    required_data_fields: string[];
     created_at: string;
     updated_at: string;
     products_count?: number;
@@ -15,4 +16,5 @@ export type TemplateFormData = {
     name: string;
     required_document_types: string[];
     optional_document_types: string[];
+    required_data_fields: string[];
 };

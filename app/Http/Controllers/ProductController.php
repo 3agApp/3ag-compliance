@@ -68,7 +68,7 @@ class ProductController extends Controller
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name', 'supplier_id']),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'description']),
-            'templates' => Template::orderBy('name')->get(['id', 'name', 'category_id', 'required_document_types', 'optional_document_types']),
+            'templates' => Template::orderBy('name')->get(['id', 'name', 'category_id', 'required_document_types', 'optional_document_types', 'required_data_fields']),
             'statuses' => ProductStatus::options(),
             'documentTypes' => DocumentType::options(),
         ]);
@@ -94,7 +94,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Response
     {
-        $product->load(['supplier:id,name', 'brand:id,name,supplier_id', 'category:id,name', 'template:id,name,category_id', 'media']);
+        $product->load(['supplier:id,name', 'brand:id,name,supplier_id', 'category:id,name', 'template', 'media', 'safetyEntry']);
 
         return Inertia::render('products/edit', [
             'product' => array_merge($product->toArray(), [
@@ -108,6 +108,7 @@ class ProductController extends Controller
                     'order' => $media->order_column,
                 ])->values()->all(),
                 'documents' => $this->formatDocuments($product),
+                'safety_entry' => $product->safetyEntry,
             ]),
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name', 'supplier_id']),

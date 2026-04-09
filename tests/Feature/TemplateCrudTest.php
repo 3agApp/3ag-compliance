@@ -237,3 +237,61 @@ it('includes products count on templates index', function () {
             ->where('templates.data.0.products_count', 0)
         );
 });
+
+it('stores a template with required data fields', function () {
+    $category = Category::factory()->create();
+
+    $this->post(route('templates.store'), [
+        'category_id' => $category->id,
+        'name' => 'Safety Template',
+        'required_document_types' => [],
+        'optional_document_types' => [],
+        'required_data_fields' => ['safety_text', 'warning_text', 'age_grading'],
+    ])->assertRedirect(route('templates.index'));
+
+    $template = Template::where('name', 'Safety Template')->first();
+
+    expect($template->required_data_fields)->toBe(['safety_text', 'warning_text', 'age_grading']);
+});
+
+it('stores a template with empty required data fields', function () {
+    $category = Category::factory()->create();
+
+    $this->post(route('templates.store'), [
+        'category_id' => $category->id,
+        'name' => 'No Data Fields',
+        'required_document_types' => [],
+        'optional_document_types' => [],
+        'required_data_fields' => [],
+    ])->assertRedirect(route('templates.index'));
+
+    $template = Template::where('name', 'No Data Fields')->first();
+
+    expect($template->required_data_fields)->toBe([]);
+});
+
+it('validates required data field values on store', function () {
+    $category = Category::factory()->create();
+
+    $this->post(route('templates.store'), [
+        'category_id' => $category->id,
+        'name' => 'Invalid Fields',
+        'required_document_types' => [],
+        'optional_document_types' => [],
+        'required_data_fields' => ['invalid_field'],
+    ])->assertSessionHasErrors(['required_data_fields.0']);
+});
+
+it('updates a template with required data fields', function () {
+    $template = Template::factory()->create(['required_data_fields' => []]);
+
+    $this->put(route('templates.update', $template), [
+        'category_id' => $template->category_id,
+        'name' => $template->name,
+        'required_document_types' => [],
+        'optional_document_types' => [],
+        'required_data_fields' => ['material_information', 'additional_notes'],
+    ])->assertRedirect(route('templates.index'));
+
+    expect($template->fresh()->required_data_fields)->toBe(['material_information', 'additional_notes']);
+});

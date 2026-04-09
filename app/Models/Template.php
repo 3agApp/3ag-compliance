@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['category_id', 'name', 'required_document_types', 'optional_document_types'])]
+#[Fillable(['category_id', 'name', 'required_document_types', 'optional_document_types', 'required_data_fields'])]
 class Template extends Model
 {
     /** @use HasFactory<TemplateFactory> */
@@ -36,6 +36,7 @@ class Template extends Model
             'category_id' => 'integer',
             'required_document_types' => 'array',
             'optional_document_types' => 'array',
+            'required_data_fields' => 'array',
         ];
     }
 }

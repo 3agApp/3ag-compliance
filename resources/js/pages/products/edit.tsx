@@ -4,6 +4,7 @@ import Heading from '@/components/heading';
 import ProductDocuments from '@/components/product-documents';
 import ProductFormFields from '@/components/product-form';
 import ProductImages from '@/components/product-images';
+import ProductSafetyEntries from '@/components/product-safety-entries';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { index, update } from '@/routes/products';
@@ -77,6 +78,9 @@ export default function ProductsEdit({
                             <TabsTrigger value="documents">
                                 Documents
                             </TabsTrigger>
+                            <TabsTrigger value="safety">
+                                Safety Data
+                            </TabsTrigger>
                         </TabsList>
                         <TabsContent value="images">
                             <ProductImages
@@ -89,6 +93,13 @@ export default function ProductsEdit({
                                 productId={product.id}
                                 documentTypes={documentTypes}
                                 initialDocuments={product.documents ?? []}
+                            />
+                        </TabsContent>
+                        <TabsContent value="safety">
+                            <ProductSafetyEntries
+                                productId={product.id}
+                                initialSafetyEntry={product.safety_entry ?? null}
+                                requiredDataFields={product.template?.required_data_fields ?? []}
                             />
                         </TabsContent>
                     </Tabs>
