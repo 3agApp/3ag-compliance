@@ -14,34 +14,14 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import type { Template, TemplateFormData } from '@/types';
 
-type Requirement = 'none' | 'required' | 'optional';
-
 type Props = {
-    errors: Partial<Record<keyof TemplateFormData | `required_document_types.${number}` | `optional_document_types.${number}` | `required_data_fields.${number}`, string>>;
+    errors: Partial<Record<keyof TemplateFormData | `required_document_types.${number}` | `required_data_fields.${number}`, string>>;
     processing: boolean;
     template?: Template;
     categories: { id: number; name: string }[];
     documentTypes: Record<string, string>;
     submitLabel: string;
 };
-
-function buildInitialAssignments(
-    documentTypes: Record<string, string>,
-    requiredTypes: string[],
-    optionalTypes: string[],
-): Record<string, Requirement> {
-    const assignments: Record<string, Requirement> = {};
-    for (const key of Object.keys(documentTypes)) {
-        if (requiredTypes.includes(key)) {
-            assignments[key] = 'required';
-        } else if (optionalTypes.includes(key)) {
-            assignments[key] = 'optional';
-        } else {
-            assignments[key] = 'none';
-        }
-    }
-    return assignments;
-}
 
 const DATA_FIELDS: { value: string; label: string }[] = [
     { value: 'safety_text', label: 'Safety notice text' },
@@ -52,6 +32,16 @@ const DATA_FIELDS: { value: string; label: string }[] = [
     { value: 'safety_instructions', label: 'Safety instructions' },
     { value: 'additional_notes', label: 'Additional notes' },
 ];
+
+function toggleSet(set: Set<string>, value: string, checked: boolean): Set<string> {
+    const next = new Set(set);
+    if (checked) {
+        next.add(value);
+    } else {
+        next.delete(value);
+    }
+    return next;
+}
 
 export default function TemplateFormFields({
     errors,
@@ -64,41 +54,14 @@ export default function TemplateFormFields({
     const [categoryId, setCategoryId] = useState<string>(
         template?.category_id?.toString() ?? '',
     );
-    const [assignments, setAssignments] = useState<Record<string, Requirement>>(
-        () =>
-            buildInitialAssignments(
-                documentTypes,
-                template?.required_document_types ?? [],
-                template?.optional_document_types ?? [],
-            ),
+    const [selectedDocTypes, setSelectedDocTypes] = useState<Set<string>>(
+        () => new Set(template?.required_document_types ?? []),
     );
     const [selectedDataFields, setSelectedDataFields] = useState<Set<string>>(
         () => new Set(template?.required_data_fields ?? []),
     );
 
-    const requiredTypes = Object.entries(assignments)
-        .filter(([, v]) => v === 'required')
-        .map(([k]) => k);
-    const optionalTypes = Object.entries(assignments)
-        .filter(([, v]) => v === 'optional')
-        .map(([k]) => k);
-
-    function handleAssignmentChange(docType: string, value: Requirement) {
-        setAssignments((prev) => ({ ...prev, [docType]: value }));
-    }
-
-    function handleDataFieldToggle(field: string, checked: boolean) {
-        setSelectedDataFields((prev) => {
-            const next = new Set(prev);
-            if (checked) {
-                next.add(field);
-            } else {
-                next.delete(field);
-            }
-            return next;
-        });
-    }
-
+    const requiredDocTypes = Array.from(selectedDocTypes);
     const requiredDataFields = Array.from(selectedDataFields);
 
     return (
@@ -149,11 +112,11 @@ export default function TemplateFormFields({
                 <div className="space-y-4 sm:col-span-2">
                     <Label>Document Types</Label>
                     <p className="text-sm text-muted-foreground">
-                        For each document type, select whether it is required, optional, or not included in this template.
+                        Select which document types are required for products using this template.
                     </p>
 
                     {/* Hidden inputs for form submission */}
-                    {requiredTypes.map((type) => (
+                    {requiredDocTypes.map((type) => (
                         <input
                             key={`req-${type}`}
                             type="hidden"
@@ -161,46 +124,26 @@ export default function TemplateFormFields({
                             value={type}
                         />
                     ))}
-                    {requiredTypes.length === 0 && (
+                    {requiredDocTypes.length === 0 && (
                         <input type="hidden" name="required_document_types" value="" />
-                    )}
-                    {optionalTypes.map((type) => (
-                        <input
-                            key={`opt-${type}`}
-                            type="hidden"
-                            name="optional_document_types[]"
-                            value={type}
-                        />
-                    ))}
-                    {optionalTypes.length === 0 && (
-                        <input type="hidden" name="optional_document_types" value="" />
                     )}
 
                     <div className="rounded-lg border">
-                        <div className="grid grid-cols-[1fr_5rem_5rem] items-center gap-4 border-b bg-muted/50 px-4 py-2.5 text-sm font-medium">
+                        <div className="grid grid-cols-[1fr_5rem] items-center gap-4 border-b bg-muted/50 px-4 py-2.5 text-sm font-medium">
                             <span>Document Type</span>
                             <span className="text-center">Required</span>
-                            <span className="text-center">Optional</span>
                         </div>
                         {Object.entries(documentTypes).map(([value, label]) => (
                             <div
                                 key={value}
-                                className="grid grid-cols-[1fr_5rem_5rem] items-center gap-4 border-b px-4 py-2.5 last:border-0"
+                                className="grid grid-cols-[1fr_5rem] items-center gap-4 border-b px-4 py-2.5 last:border-0"
                             >
                                 <span className="text-sm">{label}</span>
                                 <div className="flex justify-center">
                                     <Checkbox
-                                        checked={assignments[value] === 'required'}
+                                        checked={selectedDocTypes.has(value)}
                                         onCheckedChange={(checked) =>
-                                            handleAssignmentChange(value, checked ? 'required' : 'none')
-                                        }
-                                    />
-                                </div>
-                                <div className="flex justify-center">
-                                    <Checkbox
-                                        checked={assignments[value] === 'optional'}
-                                        onCheckedChange={(checked) =>
-                                            handleAssignmentChange(value, checked ? 'optional' : 'none')
+                                            setSelectedDocTypes((prev) => toggleSet(prev, value, !!checked))
                                         }
                                     />
                                 </div>
@@ -209,7 +152,6 @@ export default function TemplateFormFields({
                     </div>
 
                     <InputError message={errors.required_document_types} />
-                    <InputError message={errors.optional_document_types} />
                 </div>
 
                 <div className="space-y-4 sm:col-span-2">
@@ -245,7 +187,7 @@ export default function TemplateFormFields({
                                     <Checkbox
                                         checked={selectedDataFields.has(value)}
                                         onCheckedChange={(checked) =>
-                                            handleDataFieldToggle(value, !!checked)
+                                            setSelectedDataFields((prev) => toggleSet(prev, value, !!checked))
                                         }
                                     />
                                 </div>

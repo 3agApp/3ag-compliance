@@ -15,7 +15,7 @@ it('can be created via factory', function () {
     expect($template->name)->toBeString()
         ->and($template->category_id)->toBeInt()
         ->and($template->required_document_types)->toBeArray()
-        ->and($template->optional_document_types)->toBeArray();
+        ->and($template->required_data_fields)->toBeArray();
 });
 
 it('belongs to a category', function () {
@@ -28,13 +28,11 @@ it('belongs to a category', function () {
 it('stores document types as arrays of enum values', function () {
     $template = Template::factory()->create([
         'required_document_types' => [DocumentType::TestReport->value, DocumentType::Certificate->value],
-        'optional_document_types' => [DocumentType::Manual->value],
     ]);
 
     $template->refresh();
 
-    expect($template->required_document_types)->toBe([DocumentType::TestReport->value, DocumentType::Certificate->value])
-        ->and($template->optional_document_types)->toBe([DocumentType::Manual->value]);
+    expect($template->required_document_types)->toBe([DocumentType::TestReport->value, DocumentType::Certificate->value]);
 });
 
 it('category has many templates', function () {

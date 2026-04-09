@@ -17,7 +17,6 @@ type TemplateItem = {
     name: string;
     category_id: number;
     required_document_types: string[];
-    optional_document_types: string[];
 };
 
 type Props = {
@@ -174,19 +173,7 @@ function TemplateStep({
                                     </div>
                                 </div>
                             )}
-                            {template.optional_document_types.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Optional Documents</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {template.optional_document_types.map((type) => (
-                                            <Badge key={type} variant="outline" className="text-xs">
-                                                {documentTypes[type] ?? type}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {template.required_document_types.length === 0 && template.optional_document_types.length === 0 && (
+                            {template.required_document_types.length === 0 && (
                                 <p className="text-sm text-muted-foreground">No document requirements defined.</p>
                             )}
                         </CardContent>

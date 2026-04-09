@@ -68,7 +68,7 @@ class ProductController extends Controller
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name', 'supplier_id']),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'description']),
-            'templates' => Template::orderBy('name')->get(['id', 'name', 'category_id', 'required_document_types', 'optional_document_types', 'required_data_fields']),
+            'templates' => Template::orderBy('name')->get(['id', 'name', 'category_id', 'required_document_types', 'required_data_fields']),
             'statuses' => ProductStatus::options(),
             'documentTypes' => DocumentType::options(),
         ]);

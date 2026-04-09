@@ -44,7 +44,6 @@ it('stores a new template', function () {
         'category_id' => $category->id,
         'name' => 'Standard Template',
         'required_document_types' => [DocumentType::TestReport->value],
-        'optional_document_types' => [DocumentType::Manual->value],
     ])->assertRedirect(route('templates.index'));
 
     $this->assertDatabaseHas('templates', [
@@ -60,7 +59,6 @@ it('stores a template with empty document types', function () {
         'category_id' => $category->id,
         'name' => 'Empty Template',
         'required_document_types' => [],
-        'optional_document_types' => [],
     ])->assertRedirect(route('templates.index'));
 
     $this->assertDatabaseHas('templates', [
@@ -80,7 +78,6 @@ it('validates name minimum length on store', function () {
         'category_id' => $category->id,
         'name' => 'A',
         'required_document_types' => [],
-        'optional_document_types' => [],
     ])->assertSessionHasErrors(['name']);
 });
 
@@ -89,7 +86,6 @@ it('validates category exists on store', function () {
         'category_id' => 999,
         'name' => 'Test Template',
         'required_document_types' => [],
-        'optional_document_types' => [],
     ])->assertSessionHasErrors(['category_id']);
 });
 
@@ -100,19 +96,7 @@ it('validates document type values on store', function () {
         'category_id' => $category->id,
         'name' => 'Test Template',
         'required_document_types' => ['invalid_type'],
-        'optional_document_types' => [],
     ])->assertSessionHasErrors(['required_document_types.0']);
-});
-
-it('rejects overlapping required and optional document types', function () {
-    $category = Category::factory()->create();
-
-    $this->post(route('templates.store'), [
-        'category_id' => $category->id,
-        'name' => 'Overlap Template',
-        'required_document_types' => [DocumentType::TestReport->value],
-        'optional_document_types' => [DocumentType::TestReport->value],
-    ])->assertSessionHasErrors(['optional_document_types']);
 });
 
 it('displays the edit template form', function () {
@@ -136,14 +120,12 @@ it('updates an existing template', function () {
         'category_id' => $newCategory->id,
         'name' => 'Updated Template',
         'required_document_types' => [DocumentType::Certificate->value],
-        'optional_document_types' => [],
     ])->assertRedirect(route('templates.index'));
 
     expect($template->fresh())
         ->name->toBe('Updated Template')
         ->category_id->toBe($newCategory->id)
-        ->required_document_types->toBe([DocumentType::Certificate->value])
-        ->optional_document_types->toBe([]);
+        ->required_document_types->toBe([DocumentType::Certificate->value]);
 });
 
 it('validates required fields on update', function () {
@@ -245,7 +227,6 @@ it('stores a template with required data fields', function () {
         'category_id' => $category->id,
         'name' => 'Safety Template',
         'required_document_types' => [],
-        'optional_document_types' => [],
         'required_data_fields' => ['safety_text', 'warning_text', 'age_grading'],
     ])->assertRedirect(route('templates.index'));
 
@@ -261,7 +242,6 @@ it('stores a template with empty required data fields', function () {
         'category_id' => $category->id,
         'name' => 'No Data Fields',
         'required_document_types' => [],
-        'optional_document_types' => [],
         'required_data_fields' => [],
     ])->assertRedirect(route('templates.index'));
 
@@ -277,7 +257,6 @@ it('validates required data field values on store', function () {
         'category_id' => $category->id,
         'name' => 'Invalid Fields',
         'required_document_types' => [],
-        'optional_document_types' => [],
         'required_data_fields' => ['invalid_field'],
     ])->assertSessionHasErrors(['required_data_fields.0']);
 });
@@ -289,7 +268,6 @@ it('updates a template with required data fields', function () {
         'category_id' => $template->category_id,
         'name' => $template->name,
         'required_document_types' => [],
-        'optional_document_types' => [],
         'required_data_fields' => ['material_information', 'additional_notes'],
     ])->assertRedirect(route('templates.index'));
 

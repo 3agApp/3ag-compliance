@@ -3,7 +3,6 @@ export type Template = {
     category_id: number;
     name: string;
     required_document_types: string[];
-    optional_document_types: string[];
     required_data_fields: string[];
     created_at: string;
     updated_at: string;
@@ -15,6 +14,5 @@ export type TemplateFormData = {
     category_id: string;
     name: string;
     required_document_types: string[];
-    optional_document_types: string[];
     required_data_fields: string[];
 };

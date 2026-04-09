@@ -178,9 +178,6 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                         Required Docs
                                     </th>
                                     <th className="px-4 py-3 font-medium whitespace-nowrap">
-                                        Optional Docs
-                                    </th>
-                                    <th className="px-4 py-3 font-medium whitespace-nowrap">
                                         Products
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium whitespace-nowrap">
@@ -192,7 +189,7 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                 {templates.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={5}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
                                             No templates found.
@@ -212,9 +209,6 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
                                             {template.required_document_types.length}
-                                        </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
-                                            {template.optional_document_types.length}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                                             {template.products_count ?? 0}
