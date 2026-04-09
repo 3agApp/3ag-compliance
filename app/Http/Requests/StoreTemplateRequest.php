@@ -23,6 +23,14 @@ class StoreTemplateRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'required_document_types' => is_array($this->required_document_types) ? $this->required_document_types : [],
+            'optional_document_types' => is_array($this->optional_document_types) ? $this->optional_document_types : [],
+        ]);
+    }
+
     public function rules(): array
     {
         return [

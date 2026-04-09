@@ -70,7 +70,7 @@ it('stores a template with empty document types', function () {
 
 it('validates required fields on store', function () {
     $this->post(route('templates.store'), [])
-        ->assertSessionHasErrors(['category_id', 'name', 'required_document_types', 'optional_document_types']);
+        ->assertSessionHasErrors(['category_id', 'name']);
 });
 
 it('validates name minimum length on store', function () {
@@ -150,7 +150,7 @@ it('validates required fields on update', function () {
     $template = Template::factory()->create();
 
     $this->put(route('templates.update', $template), [])
-        ->assertSessionHasErrors(['category_id', 'name', 'required_document_types', 'optional_document_types']);
+        ->assertSessionHasErrors(['category_id', 'name']);
 });
 
 it('deletes a template', function () {
