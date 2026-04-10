@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductSafetyEntryController;
+use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TemplateController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,8 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+
+Route::get('/p/{product:public_uuid}', [PublicProductController::class, 'show'])->name('products.public');
 
 Route::middleware(['auth', 'verified'])->scopeBindings()->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');

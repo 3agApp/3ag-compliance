@@ -21,6 +21,7 @@ export type ProductDocumentVersion = {
     updated_at: string | null;
     replaces_document_id: number | null;
     is_current: boolean;
+    public_download: boolean;
 };
 
 export type ProductDocument = ProductDocumentVersion & {
@@ -115,6 +116,34 @@ export type SafetyFormState = {
     usage_restrictions: string;
     safety_instructions: string;
     additional_notes: string;
+};
+
+export type PublicDocument = {
+    id: number;
+    type: string;
+    type_label: string;
+    file_name: string | null;
+    file_url: string | null;
+    file_size: number | null;
+    mime_type: string | null;
+};
+
+export type PublicProduct = {
+    name: string;
+    public_uuid: string;
+    ean: string | null;
+    internal_article_number: string | null;
+    supplier_article_number: string | null;
+    order_number: string | null;
+    seal_status: SealStatus;
+    supplier: { name: string } | null;
+    brand: { name: string } | null;
+    category: { name: string } | null;
+    images: { id: number; url: string; preview_url: string; name: string }[];
+    documents: PublicDocument[];
+    safety_entry: ProductSafetyEntry | null;
+    created_at: string | null;
+    updated_at: string | null;
 };
 
 export type CategoryItem = {

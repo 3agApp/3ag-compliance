@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { Pencil } from 'lucide-react';
+import { ExternalLink, Pencil } from 'lucide-react';
 import { useState } from 'react';
+import { show as publicShow } from '@/actions/App/Http/Controllers/PublicProductController';
 import Heading from '@/components/heading';
 import ProductCompleteness from '@/components/product-completeness';
 import ProductDocuments from '@/components/product-documents';
@@ -60,6 +61,16 @@ export default function ProductsShow({ product, documentTypes }: Props) {
                         }
                     />
                     <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <a
+                                href={publicShow.url(product.public_uuid)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="size-4" />
+                                Public View
+                            </a>
+                        </Button>
                         <Button variant="outline" asChild>
                             <Link href={edit(product.id)}>
                                 <Pencil className="size-4" />
