@@ -44,8 +44,8 @@ jobs:
 
       - name: Add deploy host to known hosts
         env:
-          DEPLOY_HOSTNAME: ${{ secrets.DEPLOY_HOSTNAME }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_HOSTNAME: ${{ vars.DEPLOY_HOSTNAME }}
+          DEPLOY_SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "${DEPLOY_SSH_PORT:-22}" "$DEPLOY_HOSTNAME" >> ~/.ssh/known_hosts
@@ -53,9 +53,9 @@ jobs:
       - name: Deploy application
         env:
           DEPLOY_BRANCH: ${{ github.ref_name }}
-          DEPLOY_HOSTNAME: ${{ secrets.DEPLOY_HOSTNAME }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_REMOTE_USER: ${{ secrets.DEPLOY_REMOTE_USER }}
+          DEPLOY_HOSTNAME: ${{ vars.DEPLOY_HOSTNAME }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_REMOTE_USER: ${{ vars.DEPLOY_REMOTE_USER }}
           DEPLOY_REPOSITORY: https://github.com/${{ github.repository }}.git
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
         run: vendor/bin/dep deploy
