@@ -4,7 +4,7 @@ namespace Deployer;
 
 require 'recipe/laravel.php';
 
-set('repository', getenv('DEPLOY_REPOSITORY') ?: 'https://github.com/SourovCodes/3ag-compliance.git');
+set('repository', getenv('DEPLOY_REPOSITORY') ?: 'https://github.com/3agApp/3ag-compliance.git');
 set('branch', getenv('DEPLOY_BRANCH') ?: 'main');
 set('keep_releases', 2);
 
