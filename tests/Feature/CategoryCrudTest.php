@@ -80,7 +80,7 @@ it('updates an existing category', function () {
     $this->put(route('categories.update', $category), [
         'name' => 'Updated Name',
         'description' => 'Updated description',
-    ])->assertRedirect(route('categories.index'));
+    ])->assertRedirect(route('categories.edit', $category));
 
     expect($category->fresh())
         ->name->toBe('Updated Name')

@@ -145,7 +145,7 @@ it('updates an existing product', function () {
         'category_id' => $product->category_id,
         'template_id' => $product->template_id,
         'status' => ProductStatus::InProgress->value,
-    ])->assertRedirect(route('products.index'));
+    ])->assertRedirect(route('products.edit', $product));
 
     expect($product->fresh())
         ->name->toBe('Updated Product Name')

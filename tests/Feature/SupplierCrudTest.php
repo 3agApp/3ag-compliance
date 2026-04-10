@@ -78,7 +78,7 @@ it('updates an existing supplier', function () {
         'supplier_code' => 'SUP-UPDATED',
         'name' => 'Updated Name',
         'email' => 'updated@supplier.com',
-    ])->assertRedirect(route('suppliers.index'));
+    ])->assertRedirect(route('suppliers.edit', $supplier));
 
     expect($supplier->fresh())
         ->supplier_code->toBe('SUP-UPDATED')

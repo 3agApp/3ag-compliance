@@ -120,7 +120,7 @@ it('updates an existing template', function () {
         'category_id' => $newCategory->id,
         'name' => 'Updated Template',
         'required_document_types' => [DocumentType::Certificate->value],
-    ])->assertRedirect(route('templates.index'));
+    ])->assertRedirect(route('templates.edit', $template));
 
     expect($template->fresh())
         ->name->toBe('Updated Template')
@@ -269,7 +269,7 @@ it('updates a template with required data fields', function () {
         'name' => $template->name,
         'required_document_types' => [],
         'required_data_fields' => ['material_information', 'additional_notes'],
-    ])->assertRedirect(route('templates.index'));
+    ])->assertRedirect(route('templates.edit', $template));
 
     expect($template->fresh()->required_data_fields)->toBe(['material_information', 'additional_notes']);
 });
