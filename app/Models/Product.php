@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductStatus;
+use App\Enums\SealStatus;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -16,7 +17,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-#[Fillable(['name', 'internal_article_number', 'supplier_article_number', 'order_number', 'ean', 'supplier_id', 'brand_id', 'category_id', 'template_id', 'status', 'kontor_id', 'source_last_sync_at'])]
+#[Fillable(['name', 'internal_article_number', 'supplier_article_number', 'order_number', 'ean', 'supplier_id', 'brand_id', 'category_id', 'template_id', 'status', 'completeness_score', 'seal_status_override', 'kontor_id', 'source_last_sync_at'])]
 class Product extends Model implements HasMedia
 {
     /** @use HasFactory<ProductFactory> */
@@ -29,6 +30,7 @@ class Product extends Model implements HasMedia
      */
     protected $attributes = [
         'status' => ProductStatus::Open->value,
+        'completeness_score' => 0,
     ];
 
     public function supplier(): BelongsTo
@@ -104,6 +106,25 @@ class Product extends Model implements HasMedia
             'template_id' => 'integer',
             'source_last_sync_at' => 'datetime',
             'status' => ProductStatus::class,
+            'completeness_score' => 'decimal:2',
+            'seal_status_override' => SealStatus::class,
         ];
+    }
+
+    public function sealStatus(): SealStatus
+    {
+        if ($this->seal_status_override !== null) {
+            return $this->seal_status_override;
+        }
+
+        if ($this->status === ProductStatus::Approved) {
+            return SealStatus::Verified;
+        }
+
+        if ($this->completeness_score > 0 || ! in_array($this->status, [ProductStatus::Open, null], true)) {
+            return SealStatus::InProgress;
+        }
+
+        return SealStatus::NotVerified;
     }
 }

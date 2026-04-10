@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Http\Requests\ProductDocumentStoreRequest;
 use App\Models\Document;
 use App\Models\Product;
+use App\Services\CompletenessScoreCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -60,8 +61,12 @@ class ProductDocumentController extends Controller
                 ->toMediaCollection('file');
         }, attempts: 5);
 
+        $freshProduct = $product->fresh();
+        $score = app(CompletenessScoreCalculator::class)->calculate($freshProduct);
+
         return response()->json([
-            'documents' => $this->formatDocuments($product->fresh()),
+            'documents' => $this->formatDocuments($freshProduct),
+            'completeness_score' => $score,
         ]);
     }
 

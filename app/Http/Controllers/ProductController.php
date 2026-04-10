@@ -12,6 +12,7 @@ use App\Models\Document;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Template;
+use App\Services\CompletenessScoreCalculator;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,6 +48,7 @@ class ProductController extends Controller
         $products->through(fn (Product $product) => array_merge($product->toArray(), [
             'image_url' => $product->getFirstMediaUrl('images') ?: null,
             'image_preview_url' => $product->getFirstMediaUrl('images', 'preview') ?: null,
+            'seal_status' => $product->sealStatus()->value,
         ]));
 
         return Inertia::render('products/index', [
@@ -79,7 +81,9 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request): RedirectResponse
     {
-        Product::create($request->validated());
+        $product = Product::create($request->validated());
+
+        app(CompletenessScoreCalculator::class)->calculate($product);
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -109,6 +113,7 @@ class ProductController extends Controller
                 ])->values()->all(),
                 'documents' => $this->formatDocuments($product),
                 'safety_entry' => $product->safetyEntry,
+                'seal_status' => $product->sealStatus()->value,
             ]),
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name', 'supplier_id']),
@@ -125,6 +130,8 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, Product $product): RedirectResponse
     {
         $product->update($request->validated());
+
+        app(CompletenessScoreCalculator::class)->calculate($product);
 
         Inertia::flash('toast', [
             'type' => 'success',

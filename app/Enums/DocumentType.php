@@ -28,6 +28,20 @@ enum DocumentType: string
     }
 
     /**
+     * Get the compliance weight for this document type.
+     *
+     * High priority = 3, Medium priority = 2, Normal = 1.
+     */
+    public function complianceWeight(): int
+    {
+        return match ($this) {
+            self::TestReport, self::DeclarationOfConformity => 3,
+            self::Certificate, self::SafetyImage => 2,
+            default => 1,
+        };
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function options(): array

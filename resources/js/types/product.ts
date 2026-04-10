@@ -41,6 +41,8 @@ export type ProductSafetyEntry = {
     updated_at: string;
 };
 
+export type SealStatus = 'verified' | 'in_progress' | 'not_verified';
+
 export type Product = {
     id: number;
     name: string;
@@ -53,6 +55,9 @@ export type Product = {
     category_id: number | null;
     template_id: number;
     status: string | null;
+    completeness_score: number;
+    seal_status_override: SealStatus | null;
+    seal_status: SealStatus;
     kontor_id: string | null;
     source_last_sync_at: string | null;
     public_uuid: string;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\CompletenessScoreCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,8 +26,11 @@ class ProductSafetyEntryController extends Controller
             $validated,
         );
 
+        $score = app(CompletenessScoreCalculator::class)->calculate($product);
+
         return response()->json([
             'safety_entry' => $safetyEntry,
+            'completeness_score' => $score,
         ]);
     }
 }
