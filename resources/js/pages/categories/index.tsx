@@ -224,9 +224,7 @@ export default function CategoriesIndex({ categories, filters }: Props) {
                                                     asChild
                                                 >
                                                     <Link
-                                                        href={edit(
-                                                            category.id,
-                                                        )}
+                                                        href={edit(category.id)}
                                                     >
                                                         <Pencil className="size-4" />
                                                     </Link>
@@ -235,9 +233,7 @@ export default function CategoriesIndex({ categories, filters }: Props) {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() =>
-                                                        setDeleteId(
-                                                            category.id,
-                                                        )
+                                                        setDeleteId(category.id)
                                                     }
                                                 >
                                                     <Trash2 className="size-4 text-destructive" />
@@ -250,10 +246,7 @@ export default function CategoriesIndex({ categories, filters }: Props) {
                         </table>
                     </div>
 
-                    <Pagination
-                        paginator={categories}
-                        itemName="categories"
-                    />
+                    <Pagination paginator={categories} itemName="categories" />
                 </div>
             </div>
 

@@ -208,7 +208,10 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                             {template.category?.name ?? '—'}
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
-                                            {template.required_document_types.length}
+                                            {
+                                                template.required_document_types
+                                                    .length
+                                            }
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                                             {template.products_count ?? 0}
@@ -221,9 +224,7 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                                     asChild
                                                 >
                                                     <Link
-                                                        href={edit(
-                                                            template.id,
-                                                        )}
+                                                        href={edit(template.id)}
                                                     >
                                                         <Pencil className="size-4" />
                                                     </Link>
@@ -232,9 +233,7 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() =>
-                                                        setDeleteId(
-                                                            template.id,
-                                                        )
+                                                        setDeleteId(template.id)
                                                     }
                                                 >
                                                     <Trash2 className="size-4 text-destructive" />
@@ -247,10 +246,7 @@ export default function TemplatesIndex({ templates, filters }: Props) {
                         </table>
                     </div>
 
-                    <Pagination
-                        paginator={templates}
-                        itemName="templates"
-                    />
+                    <Pagination paginator={templates} itemName="templates" />
                 </div>
             </div>
 

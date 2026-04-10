@@ -98,8 +98,12 @@ export default function ProductsEdit({
                         <TabsContent value="safety">
                             <ProductSafetyEntries
                                 productId={product.id}
-                                initialSafetyEntry={product.safety_entry ?? null}
-                                requiredDataFields={product.template?.required_data_fields ?? []}
+                                initialSafetyEntry={
+                                    product.safety_entry ?? null
+                                }
+                                requiredDataFields={
+                                    product.template?.required_data_fields ?? []
+                                }
                             />
                         </TabsContent>
                     </Tabs>

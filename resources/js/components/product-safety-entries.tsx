@@ -25,6 +25,7 @@ const FIELDS: { key: keyof SafetyFormState; label: string }[] = [
 
 function getCsrfToken(): string {
     const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+
     return match ? decodeURIComponent(match[1]) : '';
 }
 
@@ -43,7 +44,9 @@ export default function ProductSafetyEntries({
         safety_instructions: initialSafetyEntry?.safety_instructions ?? '',
         additional_notes: initialSafetyEntry?.additional_notes ?? '',
     }));
-    const [errors, setErrors] = useState<Partial<Record<keyof SafetyFormState, string>>>({});
+    const [errors, setErrors] = useState<
+        Partial<Record<keyof SafetyFormState, string>>
+    >({});
 
     function handleChange(key: keyof SafetyFormState, value: string) {
         setForm((prev) => ({ ...prev, [key]: value }));
@@ -71,13 +74,23 @@ export default function ProductSafetyEntries({
 
             if (!response.ok) {
                 if (payload?.errors) {
-                    const mapped: Partial<Record<keyof SafetyFormState, string>> = {};
+                    const mapped: Partial<
+                        Record<keyof SafetyFormState, string>
+                    > = {};
+
                     for (const [key, value] of Object.entries(payload.errors)) {
-                        mapped[key as keyof SafetyFormState] = Array.isArray(value) ? value[0] : (value as string);
+                        mapped[key as keyof SafetyFormState] = Array.isArray(
+                            value,
+                        )
+                            ? value[0]
+                            : (value as string);
                     }
+
                     setErrors(mapped);
                 }
+
                 toast.error(payload?.message ?? 'Failed to save safety data.');
+
                 return;
             }
 
@@ -100,18 +113,24 @@ export default function ProductSafetyEntries({
                             <Label htmlFor={key}>
                                 {label}
                                 {isRequired && (
-                                    <span className="ml-1 text-destructive">*</span>
+                                    <span className="ml-1 text-destructive">
+                                        *
+                                    </span>
                                 )}
                             </Label>
                             <Textarea
                                 id={key}
                                 value={form[key]}
-                                onChange={(e) => handleChange(key, e.target.value)}
+                                onChange={(e) =>
+                                    handleChange(key, e.target.value)
+                                }
                                 placeholder={`Enter ${label.toLowerCase()}...`}
                                 rows={3}
                             />
                             {errors[key] && (
-                                <p className="text-sm text-destructive">{errors[key]}</p>
+                                <p className="text-sm text-destructive">
+                                    {errors[key]}
+                                </p>
                             )}
                         </div>
                     );

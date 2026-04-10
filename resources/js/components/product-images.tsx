@@ -1,4 +1,3 @@
-import { useRef, useState } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -6,8 +5,8 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    type DragEndEvent,
 } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
     arrayMove,
     SortableContext,
@@ -17,6 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, Trash2, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -32,6 +32,7 @@ const MAX_IMAGES = 10;
 
 function getCsrfToken(): string {
     const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+
     return match ? decodeURIComponent(match[1]) : '';
 }
 
@@ -46,12 +47,16 @@ async function request(
         'X-XSRF-TOKEN': getCsrfToken(),
         'X-Requested-With': 'XMLHttpRequest',
     };
-    if (contentType) headers['Content-Type'] = contentType;
+
+    if (contentType) {
+        headers['Content-Type'] = contentType;
+    }
 
     const res = await fetch(url, { method, headers, body });
 
     if (!res.ok) {
         const error = await res.json().catch(() => ({}));
+
         throw new Error(error.message ?? 'Request failed');
     }
 
@@ -108,7 +113,7 @@ function SortableImage({
                     type="button"
                     disabled={deletingId === image.id}
                     onClick={() => onDelete(image.id)}
-                    className="rounded bg-black/50 p-1 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
+                    className="rounded bg-black/50 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive"
                 >
                     {deletingId === image.id ? (
                         <Spinner className="size-3.5" />
@@ -142,11 +147,15 @@ export default function ProductImages({ productId, initialImages }: Props) {
     );
 
     async function handleUpload(files: FileList | null) {
-        if (!files || files.length === 0) return;
+        if (!files || files.length === 0) {
+            return;
+        }
 
         const remaining = MAX_IMAGES - images.length;
+
         if (remaining <= 0) {
             toast.warning('Maximum of 10 images reached.');
+
             return;
         }
 
@@ -155,6 +164,7 @@ export default function ProductImages({ productId, initialImages }: Props) {
         filesToUpload.forEach((file) => formData.append('images[]', file));
 
         setUploading(true);
+
         try {
             const data = await request('POST', store.url(productId), formData);
             setImages(data.images);
@@ -162,17 +172,19 @@ export default function ProductImages({ productId, initialImages }: Props) {
                 `${filesToUpload.length} image${filesToUpload.length > 1 ? 's' : ''} uploaded.`,
             );
         } catch (err) {
-            toast.error(
-                err instanceof Error ? err.message : 'Upload failed.',
-            );
+            toast.error(err instanceof Error ? err.message : 'Upload failed.');
         } finally {
             setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     }
 
     async function handleDelete(mediaId: number) {
         setDeletingId(mediaId);
+
         try {
             const data = await request(
                 'DELETE',
@@ -181,9 +193,7 @@ export default function ProductImages({ productId, initialImages }: Props) {
             setImages(data.images);
             toast.success('Image removed.');
         } catch (err) {
-            toast.error(
-                err instanceof Error ? err.message : 'Delete failed.',
-            );
+            toast.error(err instanceof Error ? err.message : 'Delete failed.');
         } finally {
             setDeletingId(null);
         }
@@ -191,16 +201,23 @@ export default function ProductImages({ productId, initialImages }: Props) {
 
     async function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
-        if (!over || active.id === over.id) return;
+
+        if (!over || active.id === over.id) {
+            return;
+        }
 
         const oldIndex = images.findIndex((img) => img.id === active.id);
         const newIndex = images.findIndex((img) => img.id === over.id);
-        if (oldIndex === -1 || newIndex === -1) return;
+
+        if (oldIndex === -1 || newIndex === -1) {
+            return;
+        }
 
         const reordered = arrayMove(images, oldIndex, newIndex);
         setImages(reordered);
 
         const ids = reordered.map((img) => img.id);
+
         try {
             await request(
                 'PUT',
@@ -228,11 +245,7 @@ export default function ProductImages({ productId, initialImages }: Props) {
                         disabled={uploading}
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        {uploading ? (
-                            <Spinner />
-                        ) : (
-                            <Plus className="size-4" />
-                        )}
+                        {uploading ? <Spinner /> : <Plus className="size-4" />}
                         Add images
                     </Button>
                 )}

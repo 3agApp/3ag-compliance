@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react';
 import {
     Download,
     FilePlus2,
@@ -6,6 +5,7 @@ import {
     History,
     RefreshCw,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { store } from '@/routes/products/documents';
-import type { DocumentFormErrors, DocumentFormState, DuplicateStrategy, ProductDocument } from '@/types';
+import type {
+    DocumentFormErrors,
+    DocumentFormState,
+    DuplicateStrategy,
+    ProductDocument,
+} from '@/types';
 
 type Props = {
     productId: number;
@@ -63,7 +68,9 @@ function getCsrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
-function mapErrors(errors: Record<string, string[]> | undefined): DocumentFormErrors {
+function mapErrors(
+    errors: Record<string, string[]> | undefined,
+): DocumentFormErrors {
     if (!errors) {
         return {};
     }
@@ -149,9 +156,8 @@ export default function ProductDocuments({
     documentTypes,
     initialDocuments,
 }: Props) {
-    const [documents, setDocuments] = useState<ProductDocument[]>(
-        initialDocuments,
-    );
+    const [documents, setDocuments] =
+        useState<ProductDocument[]>(initialDocuments);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [errors, setErrors] = useState<DocumentFormErrors>({});
@@ -267,11 +273,16 @@ export default function ProductDocuments({
                         Product documents
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        {documents.length} current document{documents.length === 1 ? '' : 's'}
+                        {documents.length} current document
+                        {documents.length === 1 ? '' : 's'}
                     </p>
                 </div>
 
-                <Button type="button" size="sm" onClick={() => setIsDialogOpen(true)}>
+                <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsDialogOpen(true)}
+                >
                     <FilePlus2 className="size-4" />
                     Add document
                 </Button>
@@ -288,7 +299,8 @@ export default function ProductDocuments({
                         No product documents yet
                     </span>
                     <span className="max-w-md text-xs">
-                        Add the first file to start tracking manuals, certificates, and reports.
+                        Add the first file to start tracking manuals,
+                        certificates, and reports.
                     </span>
                 </button>
             ) : (
@@ -302,13 +314,16 @@ export default function ProductDocuments({
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="space-y-1">
                                         <p className="text-sm font-medium text-foreground">
-                                            {document.file_name ?? 'Uploaded document'}
+                                            {document.file_name ??
+                                                'Uploaded document'}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {document.type_label} · v{document.version}
+                                            {document.type_label} · v
+                                            {document.version}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            Uploaded {formatDate(document.uploaded_at)}
+                                            Uploaded{' '}
+                                            {formatDate(document.uploaded_at)}
                                         </p>
                                     </div>
 
@@ -353,7 +368,9 @@ export default function ProductDocuments({
                                             Comment
                                         </dt>
                                         <dd className="mt-1 text-foreground">
-                                            {renderComment(document.review_comment)}
+                                            {renderComment(
+                                                document.review_comment,
+                                            )}
                                         </dd>
                                     </div>
                                 </dl>
@@ -363,7 +380,8 @@ export default function ProductDocuments({
                                         <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm text-foreground">
                                             <span className="flex items-center gap-2">
                                                 <History className="size-4 text-muted-foreground" />
-                                                Version history ({document.history.length})
+                                                Version history (
+                                                {document.history.length})
                                             </span>
                                         </summary>
                                         <div className="space-y-2 border-t px-3 py-3">
@@ -374,15 +392,22 @@ export default function ProductDocuments({
                                                 >
                                                     <div>
                                                         <p className="text-sm font-medium text-foreground">
-                                                            {version.file_name ?? 'Previous version'}
+                                                            {version.file_name ??
+                                                                'Previous version'}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            v{version.version} · uploaded {formatDate(version.uploaded_at)}
+                                                            v{version.version} ·
+                                                            uploaded{' '}
+                                                            {formatDate(
+                                                                version.uploaded_at,
+                                                            )}
                                                         </p>
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <p className="text-xs text-muted-foreground">
-                                                            {renderComment(version.review_comment)}
+                                                            {renderComment(
+                                                                version.review_comment,
+                                                            )}
                                                         </p>
                                                         {version.file_url && (
                                                             <Button
@@ -392,7 +417,9 @@ export default function ProductDocuments({
                                                                 asChild
                                                             >
                                                                 <a
-                                                                    href={version.file_url}
+                                                                    href={
+                                                                        version.file_url
+                                                                    }
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                 >
@@ -418,7 +445,8 @@ export default function ProductDocuments({
                     <DialogHeader>
                         <DialogTitle>Add Product Document</DialogTitle>
                         <DialogDescription>
-                            Upload a file and choose its type. Replacing keeps the older file in version history.
+                            Upload a file and choose its type. Replacing keeps
+                            the older file in version history.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -447,7 +475,10 @@ export default function ProductDocuments({
                                     value={form.type || undefined}
                                     onValueChange={handleTypeChange}
                                 >
-                                    <SelectTrigger id="document-type" className="w-full">
+                                    <SelectTrigger
+                                        id="document-type"
+                                        className="w-full"
+                                    >
                                         <SelectValue placeholder="Select a document type" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -504,7 +535,13 @@ export default function ProductDocuments({
                         {form.type && existingDocumentsForType.length > 0 && (
                             <div className="space-y-3 rounded-md border p-3">
                                 <p className="text-sm text-muted-foreground">
-                                    This type already has {existingDocumentsForType.length} current document{existingDocumentsForType.length === 1 ? '' : 's'}.
+                                    This type already has{' '}
+                                    {existingDocumentsForType.length} current
+                                    document
+                                    {existingDocumentsForType.length === 1
+                                        ? ''
+                                        : 's'}
+                                    .
                                 </p>
 
                                 <div className="grid gap-2 sm:grid-cols-2">
@@ -512,7 +549,8 @@ export default function ProductDocuments({
                                         type="button"
                                         className={cn(
                                             'rounded-md border px-3 py-2 text-left text-sm transition-colors',
-                                            form.duplicate_strategy === 'add_new'
+                                            form.duplicate_strategy ===
+                                                'add_new'
                                                 ? 'border-primary text-foreground'
                                                 : 'text-muted-foreground hover:border-foreground/20 hover:text-foreground',
                                         )}

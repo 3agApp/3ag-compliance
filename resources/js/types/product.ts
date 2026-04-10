@@ -66,7 +66,11 @@ export type Product = {
     supplier?: { id: number; name: string } | null;
     brand?: { id: number; name: string } | null;
     category?: { id: number; name: string } | null;
-    template?: { id: number; name: string; required_data_fields?: string[] } | null;
+    template?: {
+        id: number;
+        name: string;
+        required_data_fields?: string[];
+    } | null;
 };
 
 export type ProductFormData = {
@@ -94,7 +98,9 @@ export type DocumentFormState = {
     replace_document_id: string;
 };
 
-export type DocumentFormErrors = Partial<Record<keyof DocumentFormState, string>>;
+export type DocumentFormErrors = Partial<
+    Record<keyof DocumentFormState, string>
+>;
 
 export type SafetyFormState = {
     safety_text: string;
@@ -106,7 +112,11 @@ export type SafetyFormState = {
     additional_notes: string;
 };
 
-export type CategoryItem = { id: number; name: string; description: string | null };
+export type CategoryItem = {
+    id: number;
+    name: string;
+    description: string | null;
+};
 
 export type TemplateItem = {
     id: number;

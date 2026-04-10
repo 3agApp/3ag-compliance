@@ -206,11 +206,16 @@ export default function ProductFormFields({
                 {!hideCategoryTemplate && (
                     <div className="grid gap-2">
                         <Label htmlFor="category_id">Category</Label>
-                        <input type="hidden" name="category_id" value={categoryId} />
+                        <input
+                            type="hidden"
+                            name="category_id"
+                            value={categoryId}
+                        />
                         <Select
                             value={categoryId || '__placeholder__'}
                             onValueChange={(value) => {
-                                const newCategoryId = value === '__placeholder__' ? '' : value;
+                                const newCategoryId =
+                                    value === '__placeholder__' ? '' : value;
                                 setCategoryId(newCategoryId);
                                 setTemplateId('');
                             }}
@@ -242,19 +247,28 @@ export default function ProductFormFields({
                         <input
                             type="hidden"
                             name="template_id"
-                            value={templateId === '__placeholder__' ? '' : templateId}
+                            value={
+                                templateId === '__placeholder__'
+                                    ? ''
+                                    : templateId
+                            }
                         />
                         <Select
                             value={templateId || '__placeholder__'}
                             onValueChange={(value) =>
-                                setTemplateId(value === '__placeholder__' ? '' : value)
+                                setTemplateId(
+                                    value === '__placeholder__' ? '' : value,
+                                )
                             }
-                            disabled={!categoryId || categoryId === '__placeholder__'}
+                            disabled={
+                                !categoryId || categoryId === '__placeholder__'
+                            }
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue
                                     placeholder={
-                                        categoryId && categoryId !== '__placeholder__'
+                                        categoryId &&
+                                        categoryId !== '__placeholder__'
                                             ? filteredTemplates.length === 0
                                                 ? 'No templates for this category'
                                                 : 'Select a template'

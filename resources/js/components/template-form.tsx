@@ -15,7 +15,14 @@ import { Spinner } from '@/components/ui/spinner';
 import type { Template, TemplateFormData } from '@/types';
 
 type Props = {
-    errors: Partial<Record<keyof TemplateFormData | `required_document_types.${number}` | `required_data_fields.${number}`, string>>;
+    errors: Partial<
+        Record<
+            | keyof TemplateFormData
+            | `required_document_types.${number}`
+            | `required_data_fields.${number}`,
+            string
+        >
+    >;
     processing: boolean;
     template?: Template;
     categories: { id: number; name: string }[];
@@ -33,13 +40,19 @@ const DATA_FIELDS: { value: string; label: string }[] = [
     { value: 'additional_notes', label: 'Additional notes' },
 ];
 
-function toggleSet(set: Set<string>, value: string, checked: boolean): Set<string> {
+function toggleSet(
+    set: Set<string>,
+    value: string,
+    checked: boolean,
+): Set<string> {
     const next = new Set(set);
+
     if (checked) {
         next.add(value);
     } else {
         next.delete(value);
     }
+
     return next;
 }
 
@@ -69,11 +82,17 @@ export default function TemplateFormFields({
             <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 sm:items-start">
                 <div className="grid gap-2">
                     <Label htmlFor="category_id">Category</Label>
-                    <input type="hidden" name="category_id" value={categoryId} />
+                    <input
+                        type="hidden"
+                        name="category_id"
+                        value={categoryId}
+                    />
                     <Select
                         value={categoryId || '__placeholder__'}
                         onValueChange={(value) =>
-                            setCategoryId(value === '__placeholder__' ? '' : value)
+                            setCategoryId(
+                                value === '__placeholder__' ? '' : value,
+                            )
                         }
                     >
                         <SelectTrigger className="w-full">
@@ -112,7 +131,8 @@ export default function TemplateFormFields({
                 <div className="space-y-4 sm:col-span-2">
                     <Label>Document Types</Label>
                     <p className="text-sm text-muted-foreground">
-                        Select which document types are required for products using this template.
+                        Select which document types are required for products
+                        using this template.
                     </p>
 
                     {/* Hidden inputs for form submission */}
@@ -125,7 +145,11 @@ export default function TemplateFormFields({
                         />
                     ))}
                     {requiredDocTypes.length === 0 && (
-                        <input type="hidden" name="required_document_types" value="" />
+                        <input
+                            type="hidden"
+                            name="required_document_types"
+                            value=""
+                        />
                     )}
 
                     <div className="rounded-lg border">
@@ -143,7 +167,13 @@ export default function TemplateFormFields({
                                     <Checkbox
                                         checked={selectedDocTypes.has(value)}
                                         onCheckedChange={(checked) =>
-                                            setSelectedDocTypes((prev) => toggleSet(prev, value, !!checked))
+                                            setSelectedDocTypes((prev) =>
+                                                toggleSet(
+                                                    prev,
+                                                    value,
+                                                    !!checked,
+                                                ),
+                                            )
                                         }
                                     />
                                 </div>
@@ -157,7 +187,8 @@ export default function TemplateFormFields({
                 <div className="space-y-4 sm:col-span-2">
                     <Label>Required Data Fields</Label>
                     <p className="text-sm text-muted-foreground">
-                        Select which safety data fields are required for products using this template.
+                        Select which safety data fields are required for
+                        products using this template.
                     </p>
 
                     {requiredDataFields.map((field) => (
@@ -169,7 +200,11 @@ export default function TemplateFormFields({
                         />
                     ))}
                     {requiredDataFields.length === 0 && (
-                        <input type="hidden" name="required_data_fields" value="" />
+                        <input
+                            type="hidden"
+                            name="required_data_fields"
+                            value=""
+                        />
                     )}
 
                     <div className="rounded-lg border">
@@ -187,7 +222,13 @@ export default function TemplateFormFields({
                                     <Checkbox
                                         checked={selectedDataFields.has(value)}
                                         onCheckedChange={(checked) =>
-                                            setSelectedDataFields((prev) => toggleSet(prev, value, !!checked))
+                                            setSelectedDataFields((prev) =>
+                                                toggleSet(
+                                                    prev,
+                                                    value,
+                                                    !!checked,
+                                                ),
+                                            )
                                         }
                                     />
                                 </div>

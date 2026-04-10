@@ -1,6 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import Heading from '@/components/heading';
 import CategoryFormFields from '@/components/category-form';
+import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { index, update } from '@/routes/categories';
 import type { Category, CategoryFormData } from '@/types';
