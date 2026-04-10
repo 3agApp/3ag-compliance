@@ -94,6 +94,32 @@ class ProductController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Product $product): Response
+    {
+        $product->load(['supplier:id,name', 'brand:id,name,supplier_id', 'category:id,name', 'template', 'media', 'safetyEntry']);
+
+        return Inertia::render('products/show', [
+            'product' => array_merge($product->toArray(), [
+                'image_url' => $product->getFirstMediaUrl('images') ?: null,
+                'image_preview_url' => $product->getFirstMediaUrl('images', 'preview') ?: null,
+                'images' => $product->getMedia('images')->map(fn (Media $media) => [
+                    'id' => $media->id,
+                    'url' => $media->getUrl(),
+                    'preview_url' => $media->getUrl('preview'),
+                    'name' => $media->file_name,
+                    'order' => $media->order_column,
+                ])->values()->all(),
+                'documents' => $this->formatDocuments($product),
+                'safety_entry' => $product->safetyEntry,
+                'seal_status' => $product->sealStatus()->value,
+            ]),
+            'documentTypes' => DocumentType::options(),
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Product $product): Response

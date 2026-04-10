@@ -1,6 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
+import ProductCompleteness from '@/components/product-completeness';
 import ProductDocuments from '@/components/product-documents';
 import ProductFormFields from '@/components/product-form';
 import ProductImages from '@/components/product-images';
@@ -49,6 +50,11 @@ export default function ProductsEdit({
                         <Link href={index()}>Back to list</Link>
                     </Button>
                 </div>
+
+                <ProductCompleteness
+                    score={product.completeness_score}
+                    sealStatus={product.seal_status}
+                />
 
                 <div className="rounded-xl border p-6">
                     <Form<ProductFormData>

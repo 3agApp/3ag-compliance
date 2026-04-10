@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->scopeBindings()->group(function () {
     Route::resource('suppliers.brands', BrandController::class)->only(['store', 'update', 'destroy']);
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('templates', TemplateController::class)->except(['show']);
-    Route::resource('products', ProductController::class)->except(['show']);
+    Route::resource('products', ProductController::class);
     Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
     Route::post('products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
     Route::delete('products/{product}/images/{media}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');

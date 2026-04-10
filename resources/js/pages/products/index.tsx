@@ -3,6 +3,7 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
+    Eye,
     Pencil,
     Plus,
     Search,
@@ -23,7 +24,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { create, destroy, edit, index } from '@/routes/products';
+import { create, destroy, edit, index, show } from '@/routes/products';
 import type { PaginatedData, Product } from '@/types';
 
 type Filters = {
@@ -313,6 +314,17 @@ export default function ProductsIndex({ products, filters }: Props) {
                                         </td>
                                         <td className="px-4 py-3 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={show(product.id)}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                    </Link>
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

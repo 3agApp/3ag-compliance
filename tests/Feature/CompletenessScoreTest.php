@@ -10,6 +10,7 @@ use App\Models\Template;
 use App\Models\User;
 use App\Services\CompletenessScoreCalculator;
 use Illuminate\Http\UploadedFile;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -302,4 +303,18 @@ it('recalculates score when document is uploaded', function () {
         ->assertJsonStructure(['documents', 'completeness_score']);
 
     expect($product->fresh()->completeness_score)->toBeGreaterThan(0);
+});
+
+it('shows completeness score and seal status on show page', function () {
+    $product = Product::factory()->create(['status' => ProductStatus::Approved]);
+
+    $this->calculator->calculate($product);
+
+    $this->get(route('products.show', $product))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('products/show')
+            ->has('product.completeness_score')
+            ->where('product.seal_status', 'verified')
+        );
 });
