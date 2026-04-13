@@ -28,11 +28,6 @@ class Organization extends Model implements HasCurrentTenantLabel
         return $this->hasMany(Invitation::class);
     }
 
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class);
-    }
-
     public function getCurrentTenantLabel(): string
     {
         return 'Active Organization';
