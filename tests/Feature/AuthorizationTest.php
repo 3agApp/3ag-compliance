@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\Brand;
 use App\Models\Invitation;
 use App\Models\Organization;
+use App\Models\Supplier;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,6 +66,56 @@ describe('InvitationPolicy', function () {
         expect($this->member->can('viewAny', Invitation::class))->toBeFalse()
             ->and($this->member->can('create', Invitation::class))->toBeFalse()
             ->and($this->member->can('delete', $invitation))->toBeFalse();
+    });
+});
+
+describe('SupplierPolicy', function () {
+    it('allows owner and admin to manage suppliers', function () {
+        $supplier = Supplier::factory()->create(['organization_id' => $this->organization->id]);
+
+        expect($this->owner->can('viewAny', Supplier::class))->toBeTrue()
+            ->and($this->owner->can('create', Supplier::class))->toBeTrue()
+            ->and($this->owner->can('delete', $supplier))->toBeTrue()
+            ->and($this->admin->can('viewAny', Supplier::class))->toBeTrue()
+            ->and($this->admin->can('create', Supplier::class))->toBeTrue()
+            ->and($this->admin->can('delete', $supplier))->toBeTrue();
+    });
+
+    it('prevents members from managing suppliers', function () {
+        $supplier = Supplier::factory()->create(['organization_id' => $this->organization->id]);
+
+        expect($this->member->can('viewAny', Supplier::class))->toBeFalse()
+            ->and($this->member->can('create', Supplier::class))->toBeFalse()
+            ->and($this->member->can('delete', $supplier))->toBeFalse();
+    });
+});
+
+describe('BrandPolicy', function () {
+    it('allows owner and admin to manage brands', function () {
+        $supplier = Supplier::factory()->create(['organization_id' => $this->organization->id]);
+        $brand = Brand::factory()->create([
+            'organization_id' => $this->organization->id,
+            'supplier_id' => $supplier->id,
+        ]);
+
+        expect($this->owner->can('viewAny', Brand::class))->toBeTrue()
+            ->and($this->owner->can('create', Brand::class))->toBeTrue()
+            ->and($this->owner->can('delete', $brand))->toBeTrue()
+            ->and($this->admin->can('viewAny', Brand::class))->toBeTrue()
+            ->and($this->admin->can('create', Brand::class))->toBeTrue()
+            ->and($this->admin->can('delete', $brand))->toBeTrue();
+    });
+
+    it('prevents members from managing brands', function () {
+        $supplier = Supplier::factory()->create(['organization_id' => $this->organization->id]);
+        $brand = Brand::factory()->create([
+            'organization_id' => $this->organization->id,
+            'supplier_id' => $supplier->id,
+        ]);
+
+        expect($this->member->can('viewAny', Brand::class))->toBeFalse()
+            ->and($this->member->can('create', Brand::class))->toBeFalse()
+            ->and($this->member->can('delete', $brand))->toBeFalse();
     });
 });
 

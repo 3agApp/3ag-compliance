@@ -11,14 +11,19 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class InvitationResource extends Resource
 {
     protected static ?string $model = Invitation::class;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Organization';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-envelope';
 
     protected static ?string $navigationLabel = 'Invitations';
+
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $recordTitleAttribute = 'email';
 

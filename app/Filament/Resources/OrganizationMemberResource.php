@@ -12,14 +12,19 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class OrganizationMemberResource extends Resource
 {
     protected static ?string $model = User::class;
 
+    protected static string|UnitEnum|null $navigationGroup = 'Organization';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationLabel = 'Members';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $modelLabel = 'Member';
 
