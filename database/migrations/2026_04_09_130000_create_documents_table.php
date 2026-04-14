@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Organization::class)->constrained();
-            $table->foreignIdFor(Product::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Product::class)->constrained();
             $table->string('type');
             $table->uuid('version_group_uuid');
             $table->foreignId('replaces_document_id')->nullable()->constrained('documents')->nullOnDelete();
