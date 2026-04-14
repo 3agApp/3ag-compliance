@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Brands\Pages;
+namespace App\Filament\Resources\Suppliers\Resources\Brands\Pages;
 
-use App\Filament\Resources\Brands\BrandResource;
+use App\Filament\Resources\Suppliers\Resources\Brands\BrandResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateBrand extends CreateRecord

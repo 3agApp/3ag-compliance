@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Brands\Schemas;
+namespace App\Filament\Resources\Suppliers\Resources\Brands\Schemas;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;

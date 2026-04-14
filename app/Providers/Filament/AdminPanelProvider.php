@@ -2,14 +2,8 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Register;
-use App\Filament\Pages\Tenancy\EditOrganizationProfile;
-use App\Filament\Pages\Tenancy\RegisterOrganization;
-use App\Filament\Resources\Invitations\InvitationResource;
-use App\Filament\Resources\OrganizationMemberResource;
-use App\Filament\Resources\Suppliers\Resources\Brands\BrandResource;
-use App\Filament\Resources\Suppliers\SupplierResource;
-use App\Models\Organization;
+use App\Filament\Resources\Categories\CategoryResource;
+use App\Filament\Resources\Categories\Resources\Templates\TemplateResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,42 +21,29 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class DashboardPanelProvider extends PanelProvider
+class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('dashboard')
-            ->path('dashboard')
+            ->id('admin')
+            ->path('admin')
             ->login()
-            ->registration(Register::class)
-            ->databaseNotifications()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Slate,
             ])
-            ->tenant(Organization::class, slugAttribute: 'slug', ownershipRelationship: 'organization')
-            ->tenantRegistration(RegisterOrganization::class)
-            ->tenantProfile(EditOrganizationProfile::class)
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label('Catalog')
                     ->collapsed(),
-                NavigationGroup::make()
-                    ->label('Organization')
-                    ->collapsed(),
             ])
             ->resources([
-                SupplierResource::class,
-                BrandResource::class,
-                OrganizationMemberResource::class,
-                InvitationResource::class,
+                CategoryResource::class,
+                TemplateResource::class,
             ])
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
             ])

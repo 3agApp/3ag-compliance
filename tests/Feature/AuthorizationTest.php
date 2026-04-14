@@ -2,9 +2,11 @@
 
 use App\Enums\Role;
 use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Invitation;
 use App\Models\Organization;
 use App\Models\Supplier;
+use App\Models\Template;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +19,9 @@ beforeEach(function () {
     $this->admin = User::factory()->create();
     $this->member = User::factory()->create();
     $this->outsider = User::factory()->create();
+    $this->systemAdmin = User::factory()->create(['email' => 'system-admin@example.com']);
+
+    config()->set('admin.allowed_emails', [$this->systemAdmin->email]);
 
     $this->organization->members()->attach($this->owner, ['role' => Role::Owner->value]);
     $this->organization->members()->attach($this->admin, ['role' => Role::Admin->value]);
@@ -116,6 +121,52 @@ describe('BrandPolicy', function () {
         expect($this->member->can('viewAny', Brand::class))->toBeFalse()
             ->and($this->member->can('create', Brand::class))->toBeFalse()
             ->and($this->member->can('delete', $brand))->toBeFalse();
+    });
+});
+
+describe('CategoryPolicy', function () {
+    it('allows system admins to manage categories', function () {
+        $category = Category::factory()->create(['organization_id' => $this->organization->id]);
+
+        expect($this->systemAdmin->can('viewAny', Category::class))->toBeTrue()
+            ->and($this->systemAdmin->can('create', Category::class))->toBeTrue()
+            ->and($this->systemAdmin->can('delete', $category))->toBeTrue();
+    });
+
+    it('prevents non system admins from managing categories', function () {
+        $category = Category::factory()->create(['organization_id' => $this->organization->id]);
+
+        expect($this->owner->can('viewAny', Category::class))->toBeFalse()
+            ->and($this->admin->can('create', Category::class))->toBeFalse()
+            ->and($this->member->can('create', Category::class))->toBeFalse()
+            ->and($this->member->can('delete', $category))->toBeFalse();
+    });
+});
+
+describe('TemplatePolicy', function () {
+    it('allows system admins to manage templates', function () {
+        $category = Category::factory()->create(['organization_id' => $this->organization->id]);
+        $template = Template::factory()->create([
+            'organization_id' => $this->organization->id,
+            'category_id' => $category->id,
+        ]);
+
+        expect($this->systemAdmin->can('viewAny', Template::class))->toBeTrue()
+            ->and($this->systemAdmin->can('create', Template::class))->toBeTrue()
+            ->and($this->systemAdmin->can('delete', $template))->toBeTrue();
+    });
+
+    it('prevents non system admins from managing templates', function () {
+        $category = Category::factory()->create(['organization_id' => $this->organization->id]);
+        $template = Template::factory()->create([
+            'organization_id' => $this->organization->id,
+            'category_id' => $category->id,
+        ]);
+
+        expect($this->owner->can('viewAny', Template::class))->toBeFalse()
+            ->and($this->admin->can('create', Template::class))->toBeFalse()
+            ->and($this->member->can('create', Template::class))->toBeFalse()
+            ->and($this->member->can('delete', $template))->toBeFalse();
     });
 });
 

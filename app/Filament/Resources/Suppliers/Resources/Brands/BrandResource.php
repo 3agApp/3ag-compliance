@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\Brands;
+namespace App\Filament\Resources\Suppliers\Resources\Brands;
 
-use App\Filament\Resources\Brands\Pages\CreateBrand;
-use App\Filament\Resources\Brands\Pages\EditBrand;
-use App\Filament\Resources\Brands\Pages\ListBrands;
-use App\Filament\Resources\Brands\Schemas\BrandForm;
-use App\Filament\Resources\Brands\Tables\BrandsTable;
+use App\Filament\Resources\Suppliers\Resources\Brands\Pages\CreateBrand;
+use App\Filament\Resources\Suppliers\Resources\Brands\Pages\EditBrand;
+use App\Filament\Resources\Suppliers\Resources\Brands\Pages\ListBrands;
+use App\Filament\Resources\Suppliers\Resources\Brands\Schemas\BrandForm;
+use App\Filament\Resources\Suppliers\Resources\Brands\Tables\BrandsTable;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Models\Brand;
 use BackedEnum;

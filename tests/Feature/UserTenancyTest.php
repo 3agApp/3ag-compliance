@@ -58,3 +58,19 @@ it('user can belong to multiple organizations', function () {
 
     expect($this->owner->organizations)->toHaveCount(2);
 });
+
+it('system admins can access the admin panel', function () {
+    $adminPanel = Filament::getPanel('admin');
+
+    config()->set('admin.allowed_emails', [$this->owner->email]);
+
+    expect($this->owner->canAccessPanel($adminPanel))->toBeTrue();
+});
+
+it('non system admins cannot access the admin panel', function () {
+    $adminPanel = Filament::getPanel('admin');
+
+    config()->set('admin.allowed_emails', ['different-user@example.com']);
+
+    expect($this->owner->canAccessPanel($adminPanel))->toBeFalse();
+});

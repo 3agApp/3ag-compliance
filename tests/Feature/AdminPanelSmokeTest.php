@@ -1,0 +1,62 @@
+<?php
+
+use App\Enums\Role;
+use App\Models\Category;
+use App\Models\Organization;
+use App\Models\Template;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+dataset('admin_filament_pages', [
+    'admin dashboard' => ['filament.admin.pages.dashboard'],
+    'categories index' => ['filament.admin.resources.categories.index'],
+    'categories create' => ['filament.admin.resources.categories.create'],
+    'categories edit' => ['filament.admin.resources.categories.edit'],
+    'category templates index' => ['filament.admin.resources.categories.templates.index'],
+    'category templates create' => ['filament.admin.resources.categories.templates.create'],
+    'category templates edit' => ['filament.admin.resources.categories.templates.edit'],
+]);
+
+beforeEach(function () {
+    $this->systemAdmin = User::factory()->create(['email' => 'system-admin@example.com']);
+    config()->set('admin.allowed_emails', [$this->systemAdmin->email]);
+
+    $this->organization = Organization::factory()->create();
+    $this->organization->members()->attach($this->systemAdmin, ['role' => Role::Owner->value]);
+
+    $this->category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $this->template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $this->category->id,
+    ]);
+});
+
+it('loads the admin login page', function () {
+    $this->get(route('filament.admin.auth.login'))
+        ->assertSuccessful();
+});
+
+it('loads each admin filament page for system admins', function (string $routeName) {
+    $parameters = [];
+
+    if ($routeName === 'filament.admin.resources.categories.edit') {
+        $parameters['record'] = $this->category;
+    }
+
+    if (str_starts_with($routeName, 'filament.admin.resources.categories.templates.')) {
+        $parameters['category'] = $this->category;
+    }
+
+    if ($routeName === 'filament.admin.resources.categories.templates.edit') {
+        $parameters['record'] = $this->template;
+    }
+
+    $this->actingAs($this->systemAdmin)
+        ->get(route($routeName, $parameters))
+        ->assertSuccessful();
+})->with('admin_filament_pages');

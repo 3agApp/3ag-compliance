@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -33,7 +34,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'dashboard';
+        return match ($panel->getId()) {
+            'admin' => $this->isSystemAdmin(),
+            'dashboard' => true,
+            default => false,
+        };
+    }
+
+    public function isSystemAdmin(): bool
+    {
+        return in_array(Str::lower($this->email), config('admin.allowed_emails', []), true);
     }
 
     public function getTenants(Panel $panel): Collection
