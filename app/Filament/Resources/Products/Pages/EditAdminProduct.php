@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Products\Pages;
 use App\Filament\Resources\Products\AdminProductResource;
 use App\Models\Product;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -31,11 +32,18 @@ class EditAdminProduct extends EditRecord
                 ->label('Ask for clarification')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->color('warning')
-                ->requiresConfirmation()
+                ->form([
+                    Textarea::make('clarification_note')
+                        ->label('Note for the organization')
+                        ->placeholder('Explain what needs to be corrected or provided…')
+                        ->required()
+                        ->rows(4)
+                        ->maxLength(2000),
+                ])
                 ->visible(fn (): bool => $this->record instanceof Product && $this->record->canHaveClarificationRequestedByAdmin())
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     $this->handleReviewDecision(
-                        action: fn (Product $product): bool => $product->requestClarificationByAdmin(),
+                        action: fn (Product $product): bool => $product->requestClarificationByAdmin($data['clarification_note'] ?? null),
                         successTitle: 'Clarification requested',
                     );
                 }),

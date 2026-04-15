@@ -76,13 +76,18 @@ it('allows system admins to reject a product from the admin review page', functi
     expect($this->product->fresh()->status)->toBe(ProductStatus::Rejected);
 });
 
-it('allows system admins to request clarification from the admin review page', function () {
+it('allows system admins to request clarification with a note from the admin review page', function () {
     Livewire::test(EditAdminProduct::class, ['record' => $this->product->getRouteKey()])
         ->assertActionVisible('requestClarification')
-        ->callAction('requestClarification')
+        ->callAction('requestClarification', data: [
+            'clarification_note' => 'Please upload the CE marking certificate.',
+        ])
         ->assertNotified();
 
-    expect($this->product->fresh()->status)->toBe(ProductStatus::ClarificationNeeded);
+    $product = $this->product->fresh();
+
+    expect($product->status)->toBe(ProductStatus::ClarificationNeeded)
+        ->and($product->clarification_note)->toBe('Please upload the CE marking certificate.');
 });
 
 it('hides admin review decision actions when the product is not under review', function () {
@@ -129,4 +134,46 @@ it('shows relation manager content for documents and safety information on the a
         ->assertSee($document->getFirstMediaUrl(Document::FILE_COLLECTION), false)
         ->assertSee('Safety information')
         ->assertSee('Complete');
+});
+
+it('clears the clarification note when the product is resubmitted for review', function () {
+    $this->template->update([
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    Document::factory()->withFile('manual.pdf')->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $this->product->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    $this->product->update([
+        'category_id' => $this->category->id,
+        'template_id' => $this->template->id,
+        'status' => ProductStatus::ClarificationNeeded,
+        'clarification_note' => 'Please provide CE certificate.',
+        'last_reviewed_at' => now()->subDay(),
+    ]);
+
+    $this->product->touch();
+
+    expect($this->product->fresh()->clarification_note)->toBe('Please provide CE certificate.');
+
+    $this->product->fresh()->submitForReview();
+
+    $product = $this->product->fresh();
+
+    expect($product->status)->toBe(ProductStatus::UnderReview)
+        ->and($product->clarification_note)->toBeNull();
+});
+
+it('requires the clarification note field when requesting clarification', function () {
+    Livewire::test(EditAdminProduct::class, ['record' => $this->product->getRouteKey()])
+        ->callAction('requestClarification', data: [
+            'clarification_note' => '',
+        ])
+        ->assertHasActionErrors(['clarification_note' => 'required']);
+
+    expect($this->product->fresh()->status)->toBe(ProductStatus::UnderReview);
 });

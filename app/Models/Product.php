@@ -6,6 +6,9 @@ use App\Enums\DocumentType;
 use App\Enums\ProductStatus;
 use App\Enums\SealStatus;
 use App\Notifications\ProductStatusChanged;
+use chillerlan\QRCode\Output\QRMarkupSVG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
-#[Fillable(['organization_id', 'name', 'internal_article_number', 'supplier_article_number', 'order_number', 'ean', 'supplier_id', 'brand_id', 'category_id', 'template_id', 'status', 'completeness_score', 'last_reviewed_at', 'source_last_sync_at'])]
+#[Fillable(['organization_id', 'name', 'internal_article_number', 'supplier_article_number', 'order_number', 'ean', 'supplier_id', 'brand_id', 'category_id', 'template_id', 'status', 'clarification_note', 'completeness_score', 'last_reviewed_at', 'source_last_sync_at'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -271,6 +274,8 @@ class Product extends Model
             return false;
         }
 
+        $this->clarification_note = null;
+
         return $this->transitionToStatus(ProductStatus::UnderReview, [
             ProductStatus::Open,
             ProductStatus::InProgress,
@@ -312,11 +317,13 @@ class Product extends Model
         return $this->status === ProductStatus::UnderReview;
     }
 
-    public function requestClarificationByAdmin(): bool
+    public function requestClarificationByAdmin(?string $note = null): bool
     {
         if (! $this->canHaveClarificationRequestedByAdmin()) {
             return false;
         }
+
+        $this->clarification_note = $note;
 
         return $this->transitionToStatus(ProductStatus::ClarificationNeeded, [ProductStatus::UnderReview]);
     }
@@ -360,6 +367,22 @@ class Product extends Model
         }
 
         return SealStatus::NotVerified;
+    }
+
+    public function publicUrl(): string
+    {
+        return route('products.public', $this->public_uuid);
+    }
+
+    public function qrCodeSvg(): string
+    {
+        $qrCode = new QRCode(new QROptions([
+            'outputInterface' => QRMarkupSVG::class,
+            'outputBase64' => false,
+            'svgViewBoxSize' => 0,
+        ]));
+
+        return $qrCode->render($this->publicUrl());
     }
 
     private function currentTemplate(): ?Template

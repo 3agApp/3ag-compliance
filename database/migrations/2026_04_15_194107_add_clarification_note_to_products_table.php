@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('product_safety_entries', function (Blueprint $table) {
-            $table->unique('product_id');
+        Schema::table('products', function (Blueprint $table) {
+            $table->text('clarification_note')->nullable()->after('status');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('product_safety_entries', function (Blueprint $table) {
-            $table->dropUnique(['product_id']);
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('clarification_note');
         });
     }
 };

@@ -9,6 +9,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 
 class AdminProductReviewForm
 {
@@ -17,8 +18,25 @@ class AdminProductReviewForm
         return $schema
             ->components([
                 static::getReviewSummarySection(),
+                static::getClarificationNoteSection(),
                 static::getProductDetailsSection(),
                 static::getComplianceSection(),
+                static::getQrCodeSection(),
+            ]);
+    }
+
+    public static function getClarificationNoteSection(): Section
+    {
+        return Section::make('Clarification note')
+            ->columnSpanFull()
+            ->visible(fn (?Product $record): bool => $record instanceof Product
+                && $record->status === ProductStatus::ClarificationNeeded
+                && filled($record->clarification_note))
+            ->schema([
+                Callout::make('Pending clarification')
+                    ->description(fn (?Product $record): string => $record?->clarification_note ?? '')
+                    ->warning()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -102,6 +120,32 @@ class AdminProductReviewForm
                         ? $record->missingRequirementsSummary()
                         : 'All required documents and safety fields are present.')
                     ->status(fn (?Product $record): string => $record instanceof Product && $record->calculateCompletenessScore() >= 100 ? 'success' : 'warning'),
+            ]);
+    }
+
+    public static function getQrCodeSection(): Section
+    {
+        return Section::make('QR code')
+            ->description('This QR code links to the public compliance page for this product.')
+            ->columnSpanFull()
+            ->columns(2)
+            ->schema([
+                Placeholder::make('qr_code')
+                    ->label('Product QR code')
+                    ->content(fn (?Product $record): HtmlString => new HtmlString(
+                        $record instanceof Product
+                            ? '<div style="max-width:200px">'.$record->qrCodeSvg().'</div>'
+                            : ''
+                    ))
+                    ->columnSpan(1),
+                Placeholder::make('public_url')
+                    ->label('Public page URL')
+                    ->content(fn (?Product $record): HtmlString => new HtmlString(
+                        $record instanceof Product
+                            ? '<a href="'.e($record->publicUrl()).'" target="_blank" class="underline text-primary-600">'.e($record->publicUrl()).'</a>'
+                            : '—'
+                    ))
+                    ->columnSpan(1),
             ]);
     }
 

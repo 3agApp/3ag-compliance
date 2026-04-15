@@ -51,7 +51,13 @@ class ProductStatusChanged extends Notification
 
     private function body(): string
     {
-        return "\"{$this->product->name}\" status changed to {$this->newStatus->label()}.";
+        $body = "\"{$this->product->name}\" status changed to {$this->newStatus->label()}.";
+
+        if ($this->newStatus === ProductStatus::ClarificationNeeded && filled($this->product->clarification_note)) {
+            $body .= ' Note: '.$this->product->clarification_note;
+        }
+
+        return $body;
     }
 
     private function icon(): string
