@@ -7,6 +7,7 @@ use App\Enums\ProductStatus;
 use App\Enums\SealStatus;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,16 @@ class Product extends Model
         static::saving(function (Product $product): void {
             $product->completeness_score = $product->calculateCompletenessScore();
         });
+    }
+
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('completeness_score', '>=', 100);
+    }
+
+    public function scopeIncomplete(Builder $query): Builder
+    {
+        return $query->where('completeness_score', '<', 100);
     }
 
     public function organization(): BelongsTo
@@ -227,6 +238,29 @@ class Product extends Model
         $this->forceFill([
             'completeness_score' => $score,
         ])->saveQuietly();
+    }
+
+    public function canBeSubmittedForReview(): bool
+    {
+        $status = $this->status instanceof ProductStatus
+            ? $this->status
+            : ProductStatus::tryFrom((string) $this->status);
+
+        return $this->calculateCompletenessScore() >= 100
+            && ! in_array($status, [ProductStatus::UnderReview, ProductStatus::Approved], true);
+    }
+
+    public function submitForReview(): bool
+    {
+        if (! $this->canBeSubmittedForReview()) {
+            return false;
+        }
+
+        $this->forceFill([
+            'status' => ProductStatus::UnderReview,
+        ])->save();
+
+        return true;
     }
 
     public function completenessSummary(): string

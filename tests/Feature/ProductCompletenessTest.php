@@ -156,6 +156,39 @@ test('updating template requirements refreshes related product completeness', fu
     expect($product->fresh()->completeness_score)->toBe('100.00');
 });
 
+test('products can only be submitted for review when fully complete', function () {
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $this->category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $product = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $this->category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    expect($product->canBeSubmittedForReview())->toBeFalse()
+        ->and($product->submitForReview())->toBeFalse()
+        ->and($product->fresh()->status)->toBe(ProductStatus::Open);
+
+    Document::factory()->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $product->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    expect($product->fresh()->canBeSubmittedForReview())->toBeTrue()
+        ->and($product->fresh()->submitForReview())->toBeTrue()
+        ->and($product->fresh()->status)->toBe(ProductStatus::UnderReview)
+        ->and($product->fresh()->canBeSubmittedForReview())->toBeFalse();
+});
+
 test('seal status is computed from approval and completeness without an override field', function () {
     $template = Template::factory()->create([
         'organization_id' => $this->organization->id,

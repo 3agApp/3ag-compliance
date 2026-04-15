@@ -5,6 +5,7 @@ use App\Enums\ProductStatus;
 use App\Enums\Role;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Document;
@@ -60,6 +61,12 @@ it('does not expose a status field on the edit product page', function () {
         ->assertFormFieldDoesNotExist('status');
 });
 
+it('shows the current status on the edit product page', function () {
+    Livewire::test(EditProduct::class, ['record' => $this->product->getRouteKey()])
+        ->assertSee('Current status')
+        ->assertSee('Under review');
+});
+
 it('does not show a selected category summary on the edit product page', function () {
     Livewire::test(EditProduct::class, ['record' => $this->product->getRouteKey()])
         ->assertDontSee('Selected category');
@@ -113,4 +120,208 @@ it('ignores dashboard attempts to change product status when editing', function 
 
     expect($this->product->fresh()->name)->toBe('Updated Product Name')
         ->and($this->product->fresh()->status)->toBe(ProductStatus::UnderReview);
+});
+
+it('submits a completed product for review from the edit page header action', function () {
+    $category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $product = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    Document::factory()->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $product->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    Livewire::test(EditProduct::class, ['record' => $product->getRouteKey()])
+        ->assertActionVisible('submitForReview')
+        ->callAction('submitForReview')
+        ->assertNotified();
+
+    expect($product->fresh()->status)->toBe(ProductStatus::UnderReview);
+});
+
+it('hides the submit for review action on the edit page for incomplete products', function () {
+    $category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $product = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    Livewire::test(EditProduct::class, ['record' => $product->getRouteKey()])
+        ->assertActionHidden('submitForReview');
+});
+
+it('submits completed products for review from the table action', function () {
+    $category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $product = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    Document::factory()->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $product->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    Livewire::test(ListProducts::class)
+        ->assertTableActionVisible('submitForReview', $product->fresh())
+        ->callTableAction('submitForReview', $product->fresh());
+
+    expect($product->fresh()->status)->toBe(ProductStatus::UnderReview);
+});
+
+it('hides the submit for review table action for incomplete products', function () {
+    Livewire::test(ListProducts::class)
+        ->assertTableActionHidden('submitForReview', $this->product->fresh());
+});
+
+it('submits only eligible products from the bulk review action', function () {
+    $category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $completedProduct = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    $incompleteProduct = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+    ]);
+
+    Document::factory()->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $completedProduct->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    Livewire::test(ListProducts::class)
+        ->assertTableBulkActionExists('submitForReview')
+        ->callTableBulkAction('submitForReview', [$completedProduct->fresh(), $incompleteProduct->fresh()]);
+
+    expect($completedProduct->fresh()->status)->toBe(ProductStatus::UnderReview)
+        ->and($incompleteProduct->fresh()->status)->toBe(ProductStatus::Open);
+});
+
+it('filters the products table with product tabs', function () {
+    $category = Category::factory()->create([
+        'organization_id' => $this->organization->id,
+    ]);
+
+    $template = Template::factory()->create([
+        'organization_id' => $this->organization->id,
+        'category_id' => $category->id,
+        'required_document_types' => [DocumentType::Manual->value],
+        'required_data_fields' => [],
+    ]);
+
+    $completedProduct = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+        'name' => 'Completed product',
+    ]);
+
+    $underReviewProduct = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::UnderReview,
+        'name' => 'Under review product',
+    ]);
+
+    $incompleteProduct = Product::factory()->create([
+        'organization_id' => $this->organization->id,
+        'supplier_id' => $this->supplier->id,
+        'brand_id' => $this->brand->id,
+        'category_id' => $category->id,
+        'template_id' => $template->id,
+        'status' => ProductStatus::Open,
+        'name' => 'Incomplete product',
+    ]);
+
+    Document::factory()->create([
+        'organization_id' => $this->organization->id,
+        'product_id' => $completedProduct->id,
+        'type' => DocumentType::Manual,
+    ]);
+
+    Livewire::test(ListProducts::class)
+        ->assertCanSeeTableRecords([$completedProduct, $underReviewProduct, $incompleteProduct])
+        ->set('activeTab', 'completed')
+        ->assertCanSeeTableRecords([$completedProduct])
+        ->assertCanNotSeeTableRecords([$underReviewProduct, $incompleteProduct])
+        ->set('activeTab', 'under_review')
+        ->assertCanSeeTableRecords([$underReviewProduct])
+        ->assertCanNotSeeTableRecords([$completedProduct, $incompleteProduct])
+        ->set('activeTab', 'incomplete')
+        ->assertCanSeeTableRecords([$underReviewProduct, $incompleteProduct])
+        ->assertCanNotSeeTableRecords([$completedProduct]);
 });

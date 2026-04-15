@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Enums\DocumentType;
+use App\Enums\ProductStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Organization;
@@ -172,6 +173,10 @@ class ProductForm
             ->columns(3)
             ->visibleOn('edit')
             ->schema([
+                Callout::make(fn (?Product $record): string => static::getStatusHeading($record))
+                    ->description('Current status')
+                    ->status(fn (?Product $record): string => static::getProductStatusColor($record))
+                    ->columnSpan(1),
                 Callout::make(fn (?Product $record): string => static::getCompletenessScoreHeading($record))
                     ->description('Completeness score')
                     ->status(fn (?Product $record): string => static::getCompletenessStatus($record))
@@ -342,6 +347,28 @@ class ProductForm
         $score = $record instanceof Product ? (float) $record->completeness_score : 0.0;
 
         return number_format($score, 0).'% complete';
+    }
+
+    private static function getStatusHeading(?Product $record): string
+    {
+        return $record instanceof Product && filled($record->status)
+            ? $record->status->label()
+            : 'Open';
+    }
+
+    private static function getProductStatusColor(?Product $record): string
+    {
+        if (! $record instanceof Product || ! filled($record->status)) {
+            return 'gray';
+        }
+
+        return match ($record->status) {
+            ProductStatus::Approved => 'success',
+            ProductStatus::UnderReview => 'warning',
+            ProductStatus::Rejected => 'danger',
+            ProductStatus::ClarificationNeeded => 'warning',
+            default => 'gray',
+        };
     }
 
     private static function getCompletenessStatus(?Product $record): string
