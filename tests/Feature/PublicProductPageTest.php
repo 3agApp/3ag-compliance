@@ -16,7 +16,7 @@ it('displays the public product page for a valid public uuid', function () {
         ->assertSuccessful()
         ->assertSee('Test Product Alpha')
         ->assertSee($organization->name)
-        ->assertSee('Verified');
+        ->assertSee('SPS_verified_trans.png', false);
 });
 
 it('shows in-progress seal for products under review', function () {
@@ -27,7 +27,7 @@ it('shows in-progress seal for products under review', function () {
 
     $this->get(route('products.public', $product->public_uuid))
         ->assertSuccessful()
-        ->assertSee('Verification in progress');
+        ->assertSee('SPS_in_progress_trans.png', false);
 });
 
 it('shows not-verified seal for open products', function () {
@@ -39,7 +39,7 @@ it('shows not-verified seal for open products', function () {
 
     $this->get(route('products.public', $product->public_uuid))
         ->assertSuccessful()
-        ->assertSee('Not verified');
+        ->assertSee('SPS_not_verified_trans.png', false);
 });
 
 it('returns 404 for an invalid public uuid', function () {
