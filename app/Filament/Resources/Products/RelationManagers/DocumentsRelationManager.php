@@ -19,13 +19,7 @@ class DocumentsRelationManager extends RelationManager
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        if (! $ownerRecord instanceof Product) {
-            return null;
-        }
-
-        $missingDocumentCount = count($ownerRecord->missingRequiredDocumentTypes());
-
-        return $missingDocumentCount > 0 ? (string) $missingDocumentCount : null;
+        return null;
     }
 
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
