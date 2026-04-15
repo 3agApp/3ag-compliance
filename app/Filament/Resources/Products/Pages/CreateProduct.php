@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Pages;
 
+use App\Enums\ProductStatus;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use Filament\Resources\Pages\CreateRecord;
@@ -42,6 +43,9 @@ class CreateProduct extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        return ProductResource::mutateFormData($data);
+        $data = ProductResource::mutateFormData($data);
+        $data['status'] = ProductStatus::Open->value;
+
+        return $data;
     }
 }

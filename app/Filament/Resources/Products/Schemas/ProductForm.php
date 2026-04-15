@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Enums\DocumentType;
-use App\Enums\ProductStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Organization;
@@ -109,11 +108,6 @@ class ProductForm
             TextInput::make('name')
                 ->required()
                 ->maxLength(255),
-            Select::make('status')
-                ->options(ProductStatus::options())
-                ->default(ProductStatus::Open->value)
-                ->native(false)
-                ->required(),
             Select::make('supplier_id')
                 ->label('Supplier')
                 ->options(fn (): array => static::getSupplierOptions())
@@ -150,18 +144,13 @@ class ProductForm
     public static function getProductIdentitySection(): Section
     {
         return Section::make('Product details')
-            ->description('Capture the product name, lifecycle status, and internal identifiers.')
+            ->description('Capture the product name and internal identifiers.')
             ->columnSpanFull()
             ->columns(2)
             ->schema([
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Select::make('status')
-                    ->options(ProductStatus::options())
-                    ->default(ProductStatus::Open->value)
-                    ->native(false)
-                    ->required(),
                 TextInput::make('internal_article_number')
                     ->label('Internal article number')
                     ->maxLength(255),

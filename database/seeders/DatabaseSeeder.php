@@ -621,7 +621,7 @@ class DatabaseSeeder extends Seeder
                     'template' => 'stainless-bottle',
                     'supplier' => 'baltic-family',
                     'brand' => 'morrow-baby',
-                    'status' => ProductStatus::Submitted,
+                    'status' => ProductStatus::UnderReview,
                     'completeness_score' => 88,
                     'source_last_sync_at' => now()->subDays(8),
                     'safety_entry' => [

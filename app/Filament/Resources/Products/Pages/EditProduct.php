@@ -16,7 +16,10 @@ class EditProduct extends EditRecord
      */
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        return ProductResource::mutateFormData($data);
+        $data = ProductResource::mutateFormData($data);
+        $data['status'] = $this->record->status?->value;
+
+        return $data;
     }
 
     protected function getHeaderActions(): array
