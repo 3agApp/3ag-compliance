@@ -47,10 +47,10 @@ host($hostname)
     ->set('port', $sshPort);
 
 task('build:assets', function () {
-    writeln('Building client and SSR bundles locally...');
+    writeln('Building frontend assets locally...');
 
     runLocally('npm ci');
-    runLocally('npm run build:ssr');
+    runLocally('npm run build');
 })->desc('Build frontend assets locally');
 
 task('upload:assets', function () {
@@ -62,10 +62,10 @@ task('upload:assets', function () {
     $port = get('port');
     $releasePath = get('release_path');
 
-    runLocally("tar -czf {$archive} public/build bootstrap/ssr");
+    runLocally("tar -czf {$archive} public/build");
     runLocally("scp -P {$port} {$archive} {$user}@{$hostname}:{$releasePath}/");
 
-    run("mkdir -p {$releasePath}/public {$releasePath}/bootstrap");
+    run("mkdir -p {$releasePath}/public");
     run("tar -xzf {$releasePath}/{$archive} -C {$releasePath}");
     runLocally("rm {$archive}");
     run("rm {$releasePath}/{$archive}");
