@@ -57,6 +57,11 @@ class Product extends Model
         return $this->hasOne(ProductSafetyEntry::class);
     }
 
+    public function safetyEntries(): HasMany
+    {
+        return $this->hasMany(ProductSafetyEntry::class);
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
