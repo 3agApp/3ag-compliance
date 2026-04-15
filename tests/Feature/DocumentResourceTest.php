@@ -2,12 +2,20 @@
 
 use App\Enums\DocumentType;
 use App\Enums\Role;
+use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Filament\Resources\Products\ProductResource;
+use App\Filament\Resources\Products\RelationManagers\Documents\DocumentForm;
+use App\Filament\Resources\Products\RelationManagers\DocumentsRelationManager;
 use App\Models\Brand;
 use App\Models\Document;
 use App\Models\Organization;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -73,23 +81,27 @@ test('a document belongs to a product and can keep multiple media files', functi
         ->and($fileNames)->toBe(['appendix.pdf', 'certificate.pdf']);
 });
 
-dataset('product_document_filament_pages', [
-    'documents index' => ['filament.dashboard.resources.products.documents.index'],
-    'documents create' => ['filament.dashboard.resources.products.documents.create'],
-    'documents edit' => ['filament.dashboard.resources.products.documents.edit'],
-]);
+test('product resource registers documents as an inline relation manager', function () {
+    $relations = ProductResource::getRelations();
+    $documents = $this->product->documents();
 
-test('loads each nested product document filament page', function (string $routeName) {
-    $parameters = [
-        'tenant' => $this->organization,
-        'product' => $this->product,
-    ];
+    expect($relations)->toHaveKey('documents', DocumentsRelationManager::class)
+        ->and($documents)->toBeInstanceOf(HasMany::class)
+        ->and($documents->getRelated())->toBeInstanceOf(Document::class)
+        ->and(DocumentsRelationManager::getTitle($this->product, EditProduct::class))->toBe('Documents')
+        ->and(DocumentsRelationManager::canViewForRecord($this->product, EditProduct::class))->toBeTrue();
+});
 
-    if ($routeName === 'filament.dashboard.resources.products.documents.edit') {
-        $parameters['record'] = $this->document;
-    }
+test('document form uses full width type and grid file upload layout', function () {
+    $schema = DocumentForm::configure(Schema::make());
+    $components = array_values($schema->getComponents());
 
-    $this->actingAs($this->owner)
-        ->get(route($routeName, $parameters))
-        ->assertSuccessful();
-})->with('product_document_filament_pages');
+    expect($components)->toHaveCount(2)
+        ->and($components[0])->toBeInstanceOf(Select::class)
+        ->and($components[0]->getName())->toBe('type')
+        ->and($components[0]->getColumnSpan())->toBe(['default' => 'full'])
+        ->and($components[1])->toBeInstanceOf(SpatieMediaLibraryFileUpload::class)
+        ->and($components[1]->getName())->toBe('files')
+        ->and($components[1]->getColumnSpan())->toBe(['default' => 'full'])
+        ->and($components[1]->getPanelLayout())->toBe('grid');
+});

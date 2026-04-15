@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Products\Resources\Documents\Tables;
+namespace App\Filament\Resources\Products\RelationManagers\Documents;
 
 use App\Enums\DocumentType;
 use App\Models\Document;
