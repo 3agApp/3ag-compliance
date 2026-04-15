@@ -59,6 +59,14 @@ class ProductSafetyEntry extends Model
                 $productSafetyEntry->organization_id = $organizationId;
             }
         });
+
+        static::saved(function (ProductSafetyEntry $productSafetyEntry): void {
+            $productSafetyEntry->product()->first()?->refreshCompletenessScore();
+        });
+
+        static::deleted(function (ProductSafetyEntry $productSafetyEntry): void {
+            $productSafetyEntry->product()->first()?->refreshCompletenessScore();
+        });
     }
 
     public function organization(): BelongsTo

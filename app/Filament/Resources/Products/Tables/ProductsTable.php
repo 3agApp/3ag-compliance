@@ -43,7 +43,7 @@ class ProductsTable
                     ->badge()
                     ->formatStateUsing(fn (ProductStatus|string|null $state): string => $state instanceof ProductStatus ? $state->label() : (ProductStatus::tryFrom((string) $state)?->label() ?? (string) $state)),
                 TextColumn::make('completeness_score')
-                    ->label('Complete')
+                    ->label('Completeness')
                     ->numeric(decimalPlaces: 0)
                     ->suffix('%')
                     ->sortable(),

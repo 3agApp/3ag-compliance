@@ -23,6 +23,17 @@ class Template extends Model
         'required_data_fields' => '[]',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Template $template): void {
+            $template->products()
+                ->cursor()
+                ->each(function (Product $product): void {
+                    $product->refreshCompletenessScore();
+                });
+        });
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentType;
 use App\Enums\ProductStatus;
 use App\Enums\SealStatus;
 use Database\Factories\ProductFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 
 #[Fillable(['organization_id', 'name', 'internal_article_number', 'supplier_article_number', 'order_number', 'ean', 'supplier_id', 'brand_id', 'category_id', 'template_id', 'status', 'completeness_score', 'seal_status_override', 'source_last_sync_at'])]
 class Product extends Model
@@ -26,6 +28,13 @@ class Product extends Model
         'status' => ProductStatus::Open->value,
         'completeness_score' => 0,
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Product $product): void {
+            $product->completeness_score = $product->calculateCompletenessScore();
+        });
+    }
 
     public function organization(): BelongsTo
     {
@@ -93,6 +102,162 @@ class Product extends Model
         ];
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function requiredDocumentTypes(): array
+    {
+        $template = $this->currentTemplate();
+
+        if (! $template instanceof Template) {
+            return [];
+        }
+
+        return collect($template->required_document_types ?? [])
+            ->map(fn (DocumentType|string $type): string => $type instanceof DocumentType ? $type->value : (string) $type)
+            ->filter(fn (string $type): bool => DocumentType::tryFrom($type) instanceof DocumentType)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function requiredDocumentTypeCount(): int
+    {
+        return count($this->requiredDocumentTypes());
+    }
+
+    public function completedRequiredDocumentTypeCount(): int
+    {
+        return $this->requiredDocumentTypeCount() - count($this->missingRequiredDocumentTypes());
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function missingRequiredDocumentTypes(): array
+    {
+        $labels = DocumentType::options();
+        $presentTypes = $this->presentDocumentTypes();
+
+        return collect($this->requiredDocumentTypes())
+            ->reject(fn (string $type): bool => in_array($type, $presentTypes, true))
+            ->map(fn (string $type): string => $labels[$type] ?? $type)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function requiredSafetyFields(): array
+    {
+        $labels = ProductSafetyEntry::dataFieldLabels();
+        $template = $this->currentTemplate();
+
+        if (! $template instanceof Template) {
+            return [];
+        }
+
+        return collect($template->required_data_fields ?? [])
+            ->filter(fn (string $field): bool => array_key_exists($field, $labels))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function requiredSafetyFieldCount(): int
+    {
+        return count($this->requiredSafetyFields());
+    }
+
+    public function completedRequiredSafetyFieldCount(): int
+    {
+        return $this->requiredSafetyFieldCount() - count($this->missingRequiredSafetyFields());
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function missingRequiredSafetyFields(): array
+    {
+        $labels = ProductSafetyEntry::dataFieldLabels();
+        $safetyEntry = $this->currentSafetyEntry();
+
+        return collect($this->requiredSafetyFields())
+            ->reject(fn (string $field): bool => $safetyEntry instanceof ProductSafetyEntry && filled($safetyEntry->getAttribute($field)))
+            ->map(fn (string $field): string => $labels[$field])
+            ->values()
+            ->all();
+    }
+
+    public function requiredComplianceItemCount(): int
+    {
+        return $this->requiredDocumentTypeCount() + $this->requiredSafetyFieldCount();
+    }
+
+    public function completedComplianceItemCount(): int
+    {
+        return $this->completedRequiredDocumentTypeCount() + $this->completedRequiredSafetyFieldCount();
+    }
+
+    public function calculateCompletenessScore(): float
+    {
+        $requiredItemCount = $this->requiredComplianceItemCount();
+
+        if ($requiredItemCount === 0) {
+            return 0.0;
+        }
+
+        return round(($this->completedComplianceItemCount() / $requiredItemCount) * 100, 2);
+    }
+
+    public function refreshCompletenessScore(): void
+    {
+        $score = $this->calculateCompletenessScore();
+
+        if (! $this->exists) {
+            $this->completeness_score = $score;
+
+            return;
+        }
+
+        if (abs((float) $this->completeness_score - $score) < 0.01) {
+            return;
+        }
+
+        $this->forceFill([
+            'completeness_score' => $score,
+        ])->saveQuietly();
+    }
+
+    public function completenessSummary(): string
+    {
+        $requiredItemCount = $this->requiredComplianceItemCount();
+
+        if ($requiredItemCount === 0) {
+            return 'No required documents or safety fields.';
+        }
+
+        return "{$this->completedComplianceItemCount()} of {$requiredItemCount} required items are present.";
+    }
+
+    public function missingRequirementsSummary(): string
+    {
+        $summary = [];
+
+        if (filled($missingDocumentTypes = $this->missingRequiredDocumentTypes())) {
+            $summary[] = 'Missing required documents: '.implode(', ', $missingDocumentTypes).'.';
+        }
+
+        if (filled($missingSafetyFields = $this->missingRequiredSafetyFields())) {
+            $summary[] = 'Missing required safety fields: '.implode(', ', $missingSafetyFields).'.';
+        }
+
+        return filled($summary)
+            ? implode(' ', $summary)
+            : 'All required documents and safety fields are present.';
+    }
+
     public function sealStatus(): SealStatus
     {
         if ($this->seal_status_override !== null) {
@@ -108,5 +273,66 @@ class Product extends Model
         }
 
         return SealStatus::NotVerified;
+    }
+
+    private function currentTemplate(): ?Template
+    {
+        if (blank($this->template_id)) {
+            return null;
+        }
+
+        $template = $this->getRelationValue('template');
+
+        if ($template instanceof Template && (int) $template->getKey() === (int) $this->template_id) {
+            return $template;
+        }
+
+        return Template::query()->find($this->template_id);
+    }
+
+    private function currentSafetyEntry(): ?ProductSafetyEntry
+    {
+        if ($this->relationLoaded('safetyEntry')) {
+            return $this->safetyEntry;
+        }
+
+        if (! $this->exists) {
+            return null;
+        }
+
+        return $this->safetyEntry()->first();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function presentDocumentTypes(): array
+    {
+        return $this->currentDocuments()
+            ->map(fn (Document $document): ?string => match (true) {
+                $document->type instanceof DocumentType => $document->type->value,
+                filled($document->type) => (string) $document->type,
+                default => null,
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return Collection<int, Document>
+     */
+    private function currentDocuments(): Collection
+    {
+        if ($this->relationLoaded('documents')) {
+            return $this->documents;
+        }
+
+        if (! $this->exists) {
+            return collect();
+        }
+
+        return $this->documents()->get();
     }
 }

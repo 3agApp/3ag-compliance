@@ -19,6 +19,17 @@ class Document extends Model implements HasMedia
 
     public const FILE_COLLECTION = 'file';
 
+    protected static function booted(): void
+    {
+        static::saved(function (Document $document): void {
+            $document->product()->first()?->refreshCompletenessScore();
+        });
+
+        static::deleted(function (Document $document): void {
+            $document->product()->first()?->refreshCompletenessScore();
+        });
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);

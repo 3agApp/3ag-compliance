@@ -17,6 +17,46 @@ class DocumentsRelationManager extends RelationManager
 
     protected static ?string $title = 'Documents';
 
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        if (! $ownerRecord instanceof Product) {
+            return null;
+        }
+
+        $missingDocumentCount = count($ownerRecord->missingRequiredDocumentTypes());
+
+        return $missingDocumentCount > 0 ? (string) $missingDocumentCount : null;
+    }
+
+    public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
+    {
+        if (! $ownerRecord instanceof Product) {
+            return null;
+        }
+
+        return count($ownerRecord->missingRequiredDocumentTypes()) > 0 ? 'danger' : null;
+    }
+
+    public static function getMissingRequiredDocumentTypesMessage(Model $ownerRecord): ?string
+    {
+        if (! $ownerRecord instanceof Product) {
+            return null;
+        }
+
+        $missingDocumentTypes = $ownerRecord->missingRequiredDocumentTypes();
+
+        if (! filled($missingDocumentTypes)) {
+            return null;
+        }
+
+        return 'Missing required document types: '.implode(', ', $missingDocumentTypes).'.';
+    }
+
+    public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
+    {
+        return null;
+    }
+
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return $ownerRecord instanceof Product;
@@ -30,6 +70,7 @@ class DocumentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return DocumentsTable::configure($table)
+            ->description(fn (): ?string => static::getMissingRequiredDocumentTypesMessage($this->getOwnerRecord()))
             ->headerActions([
                 CreateAction::make()
                     ->mutateDataUsing(fn (array $data): array => [
