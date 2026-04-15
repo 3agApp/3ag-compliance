@@ -221,6 +221,17 @@ it('hides the submit for review table action for incomplete products', function 
         ->assertTableActionHidden('submitForReview', $this->product->fresh());
 });
 
+it('hides secondary product table columns by default', function () {
+    Livewire::test(ListProducts::class)
+        ->assertTableColumnVisible('name')
+        ->assertTableColumnVisible('category.name')
+        ->assertTableColumnVisible('status')
+        ->assertTableColumnVisible('completeness_score')
+        ->assertTableColumnExists('template.name', fn ($column): bool => $column->isToggleable() && $column->isToggledHiddenByDefault())
+        ->assertTableColumnExists('supplier.name', fn ($column): bool => $column->isToggleable() && $column->isToggledHiddenByDefault())
+        ->assertTableColumnExists('brand.name', fn ($column): bool => $column->isToggleable() && $column->isToggledHiddenByDefault());
+});
+
 it('submits only eligible products from the bulk review action', function () {
     $category = Category::factory()->create([
         'organization_id' => $this->organization->id,
