@@ -6,6 +6,7 @@ use App\Models\Invitation;
 use Filament\Auth\Pages\Register as FilamentRegister;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Route;
 
 class Register extends FilamentRegister
 {
@@ -43,6 +44,8 @@ class Register extends FilamentRegister
         $user = $this->getUser();
 
         if ($user->email !== $invitation->email) {
+            session()->forget('pending_invitation_token');
+
             Notification::make()
                 ->warning()
                 ->title('This invitation is for a different email address.')
@@ -52,25 +55,15 @@ class Register extends FilamentRegister
             return;
         }
 
-        if (! $user->distributors()->whereKey($invitation->distributor_id)->exists()) {
-            $user->distributors()->attach($invitation->distributor_id, [
-                'role' => $invitation->role->value,
-                'supplier_id' => $invitation->supplier_id,
-            ]);
-        }
-
-        $invitation->update(['accepted_at' => now()]);
-
-        session()->forget('pending_invitation_token');
-        session()->put('url.intended', route('filament.dashboard.pages.dashboard', [
-            'tenant' => $invitation->distributor->slug,
-        ]));
-
         Notification::make()
-            ->success()
-            ->title('Invitation accepted.')
-            ->body('Your account has been added to the distributor.')
+            ->info()
+            ->title('Pending invitation found.')
+            ->body('Review your invitation before creating a distributor.')
             ->send();
+
+        if (Route::has('filament.dashboard.tenant.registration')) {
+            session()->put('url.intended', route('filament.dashboard.tenant.registration'));
+        }
     }
 
     protected function getUser(): Model

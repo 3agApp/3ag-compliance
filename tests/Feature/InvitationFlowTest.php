@@ -139,13 +139,14 @@ it('accepts a pending invitation after matching registration', function () {
         ->set('data.password', 'password')
         ->set('data.passwordConfirmation', 'password')
         ->call('register')
-        ->assertRedirect(route('filament.dashboard.pages.dashboard', ['tenant' => $distributor->slug]));
+        ->assertRedirect(route('filament.dashboard.tenant.registration'));
 
     $user = User::where('email', $invitation->email)->first();
 
     expect($user)->not->toBeNull()
-        ->and($user->distributors()->whereKey($distributor)->exists())->toBeTrue()
-        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+        ->and($user->distributors()->whereKey($distributor)->exists())->toBeFalse()
+        ->and($invitation->fresh()->isAccepted())->toBeFalse()
+        ->and(session('pending_invitation_token'))->toBe($invitation->token);
 });
 
 it('accepts a supplier-scoped invitation after matching registration', function () {
@@ -168,14 +169,15 @@ it('accepts a supplier-scoped invitation after matching registration', function 
         ->set('data.password', 'password')
         ->set('data.passwordConfirmation', 'password')
         ->call('register')
-        ->assertRedirect(route('filament.dashboard.pages.dashboard', ['tenant' => $distributor->slug]));
+        ->assertRedirect(route('filament.dashboard.tenant.registration'));
 
     $user = User::where('email', $invitation->email)->first();
 
     expect($user)->not->toBeNull()
-        ->and($user->getRoleForDistributor($distributor))->toBe(Role::Supplier)
-        ->and($user->getSupplierIdForDistributor($distributor))->toBe($supplier->id)
-        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+        ->and($user->getRoleForDistributor($distributor))->toBeNull()
+        ->and($user->getSupplierIdForDistributor($distributor))->toBeNull()
+        ->and($invitation->fresh()->isAccepted())->toBeFalse()
+        ->and(session('pending_invitation_token'))->toBe($invitation->token);
 });
 
 it('keeps the pending invitation when registration email does not match', function () {
@@ -195,6 +197,6 @@ it('keeps the pending invitation when registration email does not match', functi
         ->call('register');
 
     expect($invitation->fresh()->isAccepted())->toBeFalse()
-        ->and(session('pending_invitation_token'))->toBe($invitation->token)
+        ->and(session('pending_invitation_token'))->toBeNull()
         ->and(User::where('email', 'wrong@example.com')->exists())->toBeTrue();
 });

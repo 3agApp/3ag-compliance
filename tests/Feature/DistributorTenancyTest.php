@@ -2,7 +2,9 @@
 
 use App\Enums\Role;
 use App\Filament\Pages\Tenancy\EditDistributorProfile;
+use App\Filament\Pages\Tenancy\RegisterDistributor;
 use App\Models\Distributor;
+use App\Models\Invitation;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
@@ -47,4 +49,80 @@ it('redirects to the updated tenant profile url after changing the slug', functi
         ->assertRedirect(EditDistributorProfile::getUrl(tenant: $distributor->fresh()));
 
     expect($distributor->fresh()->slug)->toBe('new-slug');
+});
+
+it('shows pending invitations instead of the distributor form on tenant registration', function () {
+    $distributor = Distributor::factory()->create(['name' => 'Inviting Distributor']);
+    $user = User::factory()->create(['email' => 'invitee@example.com']);
+
+    Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('filament.dashboard.tenant.registration'))
+        ->assertSuccessful()
+        ->assertSee('Pending Invitations')
+        ->assertSee('Inviting Distributor')
+        ->assertSee('Register a Distributor Instead');
+});
+
+it('accepts a pending invitation from the tenant registration page', function () {
+    $distributor = Distributor::factory()->create(['slug' => 'invite-org']);
+    $user = User::factory()->create(['email' => 'invitee@example.com']);
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+    ]);
+
+    $this->actingAs($user);
+
+    Filament::setCurrentPanel(Filament::getPanel('dashboard'));
+
+    Livewire::test(RegisterDistributor::class)
+        ->call('acceptInvitation', $invitation->id)
+        ->assertRedirect(route('filament.dashboard.pages.dashboard', ['tenant' => $distributor->slug]));
+
+    expect($user->fresh()->distributors()->whereKey($distributor)->exists())->toBeTrue()
+        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+});
+
+it('rejects a pending invitation from the tenant registration page', function () {
+    $distributor = Distributor::factory()->create();
+    $user = User::factory()->create(['email' => 'invitee@example.com']);
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+    ]);
+
+    $this->actingAs($user);
+
+    Filament::setCurrentPanel(Filament::getPanel('dashboard'));
+
+    Livewire::test(RegisterDistributor::class)
+        ->call('rejectInvitation', $invitation->id)
+        ->assertSet('showRegistrationForm', true);
+
+    expect($invitation->fresh())->toBeNull();
+});
+
+it('lets invited users continue to the distributor form explicitly', function () {
+    $distributor = Distributor::factory()->create();
+    $user = User::factory()->create(['email' => 'invitee@example.com']);
+
+    Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+    ]);
+
+    $this->actingAs($user);
+
+    Filament::setCurrentPanel(Filament::getPanel('dashboard'));
+
+    Livewire::test(RegisterDistributor::class)
+        ->call('showDistributorRegistrationForm')
+        ->assertSet('showRegistrationForm', true)
+        ->assertFormFieldExists('name')
+        ->assertFormFieldExists('slug');
 });
