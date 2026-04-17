@@ -23,7 +23,12 @@ class InvitationsTable
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('role')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn ($state): ?string => $state?->getLabel() ?? null),
+                TextColumn::make('supplier.name')
+                    ->label('Supplier')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->badge()
                     ->getStateUsing(function (Invitation $record): string {

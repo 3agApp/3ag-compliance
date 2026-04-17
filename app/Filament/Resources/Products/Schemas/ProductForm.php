@@ -10,6 +10,7 @@ use App\Models\Distributor;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Template;
+use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
@@ -44,6 +45,7 @@ class ProductForm
             ->description('Choose the catalog category first so template suggestions stay relevant.')
             ->columnSpanFull()
             ->columns(1)
+            ->disabled(fn (): bool => static::areCoreProductFieldsReadOnly())
             ->schema([
                 static::getCategoryField(),
             ]);
@@ -70,6 +72,7 @@ class ProductForm
             ->description('Pick the compliance template that applies to the chosen category.')
             ->columnSpanFull()
             ->columns(3)
+            ->disabled(fn (): bool => static::areCoreProductFieldsReadOnly())
             ->schema([
                 static::getTemplateField(),
                 static::getTemplateRequirementsPlaceholder(),
@@ -147,6 +150,7 @@ class ProductForm
             ->description('Capture the product name and internal identifiers.')
             ->columnSpanFull()
             ->columns(3)
+            ->disabled(fn (): bool => static::areCoreProductFieldsReadOnly())
             ->schema([
                 TextInput::make('name')
                     ->required()
@@ -223,6 +227,7 @@ class ProductForm
             ->description('Link the product to the supplier and brand that own the commercial data.')
             ->columnSpanFull()
             ->columns(2)
+            ->disabled(fn (): bool => static::areCoreProductFieldsReadOnly())
             ->schema([
                 Select::make('supplier_id')
                     ->label('Supplier')
@@ -471,6 +476,18 @@ class ProductForm
         $tenant = Filament::getTenant();
 
         return $tenant instanceof Distributor ? $tenant : null;
+    }
+
+    private static function areCoreProductFieldsReadOnly(): bool
+    {
+        $tenant = static::getTenant();
+        $user = Filament::auth()->user();
+
+        if (! $tenant instanceof Distributor || ! $user instanceof User) {
+            return false;
+        }
+
+        return ! ($user->getRoleForDistributor($tenant)?->canEditProductDetails() ?? false);
     }
 
     /**

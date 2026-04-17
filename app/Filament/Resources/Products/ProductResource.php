@@ -20,6 +20,7 @@ use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
@@ -47,12 +48,51 @@ class ProductResource extends Resource
         return ProductsTable::configure($table);
     }
 
+    public static function canCreate(): bool
+    {
+        $tenant = Filament::getTenant();
+        $user = Filament::auth()->user();
+
+        if (! $tenant instanceof Distributor || $user === null) {
+            return false;
+        }
+
+        return $user->getRoleForDistributor($tenant)?->canManageDistributor() ?? false;
+    }
+
     public static function getRelations(): array
     {
         return [
             'documents' => DocumentsRelationManager::class,
             'safetyEntries' => SafetyEntriesRelationManager::class,
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->with(['category', 'template', 'supplier', 'brand']);
+
+        $tenant = Filament::getTenant();
+        $user = Filament::auth()->user();
+
+        if (! $tenant instanceof Distributor || $user === null) {
+            return $query;
+        }
+
+        $role = $user->getRoleForDistributor($tenant);
+
+        if (! $role || $role->canManageDistributor()) {
+            return $query;
+        }
+
+        $supplierId = $user->getSupplierIdForDistributor($tenant);
+
+        if (! filled($supplierId)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('supplier_id', $supplierId);
     }
 
     /**

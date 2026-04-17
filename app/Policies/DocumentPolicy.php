@@ -61,13 +61,8 @@ class DocumentPolicy
             return false;
         }
 
-        $role = $user->getRoleForDistributor($tenant);
-
-        if (! $role?->canManageDistributor()) {
-            return false;
-        }
-
-        return (int) $document->distributor_id === (int) $tenant->getKey();
+        return $document->product !== null
+            && $user->canAccessProductInDistributor($tenant, $document->product);
     }
 
     private function canManageDocuments(User $user): bool
@@ -82,6 +77,16 @@ class DocumentPolicy
             return false;
         }
 
-        return $user->getRoleForDistributor($tenant)?->canManageDistributor() ?? false;
+        $role = $user->getRoleForDistributor($tenant);
+
+        if (! $role?->canAccessProducts()) {
+            return false;
+        }
+
+        if ($role->canManageDistributor()) {
+            return true;
+        }
+
+        return filled($user->getSupplierIdForDistributor($tenant));
     }
 }

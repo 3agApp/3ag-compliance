@@ -55,6 +55,7 @@ class Register extends FilamentRegister
         if (! $user->distributors()->whereKey($invitation->distributor_id)->exists()) {
             $user->distributors()->attach($invitation->distributor_id, [
                 'role' => $invitation->role->value,
+                'supplier_id' => $invitation->supplier_id,
             ]);
         }
 

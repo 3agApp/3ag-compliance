@@ -10,6 +10,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -82,7 +83,7 @@ class ProductsTable
                     ->icon('heroicon-o-paper-airplane')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (Product $record): bool => $record->canBeSubmittedForReview())
+                    ->visible(fn (Product $record): bool => static::currentUserCanSubmitProducts() && $record->canBeSubmittedForReview())
                     ->action(function (Product $record): void {
                         if (! $record->submitForReview()) {
                             Notification::make()
@@ -108,6 +109,7 @@ class ProductsTable
                         ->label('Submit for review')
                         ->icon('heroicon-o-paper-airplane')
                         ->requiresConfirmation()
+                        ->visible(fn (): bool => static::currentUserCanSubmitProducts())
                         ->action(function (Collection $records): void {
                             $submittedCount = 0;
                             $skippedCount = 0;
@@ -146,5 +148,15 @@ class ProductsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    private static function currentUserCanSubmitProducts(): bool
+    {
+        $tenant = Filament::getTenant();
+        $user = Filament::auth()->user();
+
+        return $tenant !== null
+            && $user !== null
+            && ($user->getRoleForDistributor($tenant)?->canSubmitProducts() ?? false);
     }
 }

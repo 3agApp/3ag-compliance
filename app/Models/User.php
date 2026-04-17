@@ -28,7 +28,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function distributors(): BelongsToMany
     {
         return $this->belongsToMany(Distributor::class)
-            ->withPivot('role')
+            ->withPivot('role', 'supplier_id')
             ->withTimestamps();
     }
 
@@ -58,9 +58,43 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
 
     public function getRoleForDistributor(Distributor $distributor): ?Role
     {
-        $membership = $this->distributors()->whereKey($distributor)->first();
+        $membership = $this->getDistributorMembership($distributor);
 
         return $membership ? Role::from($membership->pivot->role) : null;
+    }
+
+    public function getSupplierIdForDistributor(Distributor $distributor): ?int
+    {
+        $membership = $this->getDistributorMembership($distributor);
+        $supplierId = $membership?->pivot?->supplier_id;
+
+        return filled($supplierId) ? (int) $supplierId : null;
+    }
+
+    public function canAccessProductInDistributor(Distributor $distributor, Product $product): bool
+    {
+        $role = $this->getRoleForDistributor($distributor);
+
+        if (! $role?->canAccessProducts()) {
+            return false;
+        }
+
+        if ((int) $product->distributor_id !== (int) $distributor->getKey()) {
+            return false;
+        }
+
+        if ($role->canManageDistributor()) {
+            return true;
+        }
+
+        $supplierId = $this->getSupplierIdForDistributor($distributor);
+
+        return filled($supplierId) && (int) $product->supplier_id === $supplierId;
+    }
+
+    private function getDistributorMembership(Distributor $distributor): ?Distributor
+    {
+        return $this->distributors()->whereKey($distributor)->first();
     }
 
     /**

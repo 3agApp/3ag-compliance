@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\Role;
+use App\Filament\Resources\Products\ProductResource;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Distributor;
+use App\Models\Document;
 use App\Models\Invitation;
 use App\Models\Product;
+use App\Models\ProductSafetyEntry;
 use App\Models\Supplier;
 use App\Models\Template;
 use App\Models\User;
@@ -15,13 +18,20 @@ beforeEach(function () {
     $this->distributor = Distributor::factory()->create();
     $this->owner = User::factory()->create();
     $this->admin = User::factory()->create();
+    $this->supplierUser = User::factory()->create();
     $this->outsider = User::factory()->create();
     $this->systemAdmin = User::factory()->create(['email' => 'system-admin@example.com']);
+    $this->supplier = Supplier::factory()->create(['distributor_id' => $this->distributor->id]);
+    $this->otherSupplier = Supplier::factory()->create(['distributor_id' => $this->distributor->id]);
 
     config()->set('admin.allowed_emails', [$this->systemAdmin->email]);
 
     $this->distributor->members()->attach($this->owner, ['role' => Role::Owner->value]);
     $this->distributor->members()->attach($this->admin, ['role' => Role::Admin->value]);
+    $this->distributor->members()->attach($this->supplierUser, [
+        'role' => Role::Supplier->value,
+        'supplier_id' => $this->supplier->id,
+    ]);
 
     $this->actingAs($this->owner);
 
@@ -106,6 +116,87 @@ describe('ProductPolicy', function () {
             ->and($this->admin->can('delete', $product))->toBeTrue();
     });
 
+    it('limits supplier users to their own supplier products', function () {
+        $supplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->supplier->id,
+        ]);
+        $otherSupplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->otherSupplier->id,
+        ]);
+
+        expect($this->supplierUser->can('viewAny', Product::class))->toBeTrue()
+            ->and($this->supplierUser->can('view', $supplierProduct))->toBeTrue()
+            ->and($this->supplierUser->can('update', $supplierProduct))->toBeTrue()
+            ->and($this->supplierUser->can('create', Product::class))->toBeFalse()
+            ->and($this->supplierUser->can('delete', $supplierProduct))->toBeFalse()
+            ->and($this->supplierUser->can('view', $otherSupplierProduct))->toBeFalse()
+            ->and($this->supplierUser->can('update', $otherSupplierProduct))->toBeFalse();
+    });
+
+    it('scopes the product resource query to the supplier user membership', function () {
+        $supplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->supplier->id,
+        ]);
+        Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->otherSupplier->id,
+        ]);
+
+        $this->actingAs($this->supplierUser);
+
+        expect(ProductResource::getEloquentQuery()->pluck('id')->all())
+            ->toBe([$supplierProduct->id]);
+    });
+
+});
+
+describe('DocumentPolicy', function () {
+    it('allows supplier users to manage documents for their own supplier products only', function () {
+        $supplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->supplier->id,
+        ]);
+        $otherSupplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->otherSupplier->id,
+        ]);
+        $supplierDocument = Document::factory()->create(['product_id' => $supplierProduct->id]);
+        $otherSupplierDocument = Document::factory()->create(['product_id' => $otherSupplierProduct->id]);
+
+        expect($this->supplierUser->can('create', Document::class))->toBeTrue()
+            ->and($this->supplierUser->can('update', $supplierDocument))->toBeTrue()
+            ->and($this->supplierUser->can('delete', $supplierDocument))->toBeTrue()
+            ->and($this->supplierUser->can('update', $otherSupplierDocument))->toBeFalse();
+    });
+});
+
+describe('ProductSafetyEntryPolicy', function () {
+    it('allows supplier users to manage safety entries for their own supplier products only', function () {
+        $supplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->supplier->id,
+        ]);
+        $otherSupplierProduct = Product::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'supplier_id' => $this->otherSupplier->id,
+        ]);
+        $supplierEntry = ProductSafetyEntry::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'product_id' => $supplierProduct->id,
+        ]);
+        $otherSupplierEntry = ProductSafetyEntry::factory()->create([
+            'distributor_id' => $this->distributor->id,
+            'product_id' => $otherSupplierProduct->id,
+        ]);
+
+        expect($this->supplierUser->can('create', ProductSafetyEntry::class))->toBeTrue()
+            ->and($this->supplierUser->can('update', $supplierEntry))->toBeTrue()
+            ->and($this->supplierUser->can('delete', $supplierEntry))->toBeTrue()
+            ->and($this->supplierUser->can('update', $otherSupplierEntry))->toBeFalse();
+    });
 });
 
 describe('CategoryPolicy', function () {
@@ -154,8 +245,13 @@ describe('Role enum', function () {
     it('exposes the role permissions', function () {
         expect(Role::Owner->canManageMembers())->toBeTrue()
             ->and(Role::Admin->canManageMembers())->toBeTrue()
+            ->and(Role::Supplier->canManageMembers())->toBeFalse()
             ->and(Role::Owner->canManageDistributor())->toBeTrue()
             ->and(Role::Admin->canManageDistributor())->toBeTrue()
+            ->and(Role::Supplier->canManageDistributor())->toBeFalse()
+            ->and(Role::Supplier->canAccessProducts())->toBeTrue()
+            ->and(Role::Supplier->canEditProductDetails())->toBeFalse()
+            ->and(Role::Supplier->canSubmitProducts())->toBeFalse()
             ->and(Role::Owner->canDeleteDistributor())->toBeTrue()
             ->and(Role::Admin->canDeleteDistributor())->toBeFalse();
     });

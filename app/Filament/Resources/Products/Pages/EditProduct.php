@@ -6,6 +6,7 @@ use App\Filament\Resources\Products\ProductResource;
 use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -33,7 +34,9 @@ class EditProduct extends EditRecord
                 ->icon('heroicon-o-paper-airplane')
                 ->color('warning')
                 ->requiresConfirmation()
-                ->visible(fn (): bool => $this->record instanceof Product && $this->record->canBeSubmittedForReview())
+                ->visible(fn (): bool => $this->record instanceof Product
+                    && $this->currentUserCanSubmitProducts()
+                    && $this->record->canBeSubmittedForReview())
                 ->action(function (): void {
                     if (! ($this->record instanceof Product)) {
                         return;
@@ -58,5 +61,15 @@ class EditProduct extends EditRecord
                 }),
             DeleteAction::make(),
         ];
+    }
+
+    private function currentUserCanSubmitProducts(): bool
+    {
+        $tenant = Filament::getTenant();
+        $user = Filament::auth()->user();
+
+        return $tenant !== null
+            && $user !== null
+            && ($user->getRoleForDistributor($tenant)?->canSubmitProducts() ?? false);
     }
 }

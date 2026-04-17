@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['distributor_id', 'email', 'role', 'token', 'expires_at', 'accepted_at', 'invited_by'])]
+#[Fillable(['distributor_id', 'supplier_id', 'email', 'role', 'token', 'expires_at', 'accepted_at', 'invited_by'])]
 class Invitation extends Model
 {
     /** @use HasFactory<InvitationFactory> */
@@ -19,6 +19,7 @@ class Invitation extends Model
     {
         return [
             'role' => Role::class,
+            'supplier_id' => 'integer',
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
         ];
@@ -32,6 +33,11 @@ class Invitation extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function isExpired(): bool

@@ -49,7 +49,7 @@ class Distributor extends Model implements HasCurrentTenantLabel
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('role')
+            ->withPivot('role', 'supplier_id')
             ->withTimestamps();
     }
 

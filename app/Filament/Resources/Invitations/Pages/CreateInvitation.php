@@ -2,15 +2,19 @@
 
 namespace App\Filament\Resources\Invitations\Pages;
 
+use App\Enums\Role;
 use App\Filament\Resources\Invitations\InvitationResource;
 use App\Mail\InvitationMail;
+use App\Models\Distributor;
 use App\Models\Invitation;
+use App\Models\Supplier;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CreateInvitation extends CreateRecord
 {
@@ -19,6 +23,7 @@ class CreateInvitation extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         $tenant = Filament::getTenant();
+        $supplierId = $this->resolveSupplierId($tenant, $data);
 
         $existingMember = $tenant->members()
             ->where('email', $data['email'])
@@ -42,6 +47,7 @@ class CreateInvitation extends CreateRecord
         if ($existingInvitation) {
             $existingInvitation->update([
                 'role' => $data['role'],
+                'supplier_id' => $supplierId,
                 'token' => Str::random(64),
                 'expires_at' => now()->addHours(48),
                 'invited_by' => Filament::auth()->id(),
@@ -59,6 +65,7 @@ class CreateInvitation extends CreateRecord
 
         $invitation = Invitation::create([
             'distributor_id' => $tenant->id,
+            'supplier_id' => $supplierId,
             'email' => $data['email'],
             'role' => $data['role'],
             'token' => Str::random(64),
@@ -69,5 +76,38 @@ class CreateInvitation extends CreateRecord
         Mail::to($invitation->email)->send(new InvitationMail($invitation->fresh(['distributor', 'inviter'])));
 
         return $invitation;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveSupplierId(Distributor $tenant, array $data): ?int
+    {
+        $role = Role::from($data['role']);
+
+        if ($role !== Role::Supplier) {
+            return null;
+        }
+
+        $supplierId = $data['supplier_id'] ?? null;
+
+        if (! filled($supplierId)) {
+            throw ValidationException::withMessages([
+                'supplier_id' => 'Select a supplier for supplier invitations.',
+            ]);
+        }
+
+        $exists = Supplier::query()
+            ->whereBelongsTo($tenant)
+            ->whereKey($supplierId)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                'supplier_id' => 'Select a valid supplier for this distributor.',
+            ]);
+        }
+
+        return (int) $supplierId;
     }
 }

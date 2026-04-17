@@ -50,6 +50,7 @@ class InvitationAcceptController extends Controller
             if (! $existingUser->distributors()->whereKey($invitation->distributor_id)->exists()) {
                 $existingUser->distributors()->attach($invitation->distributor_id, [
                     'role' => $invitation->role->value,
+                    'supplier_id' => $invitation->supplier_id,
                 ]);
             }
 

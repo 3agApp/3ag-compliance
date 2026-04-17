@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Filament\Pages\Auth\Register as RegisterPage;
 use App\Models\Distributor;
 use App\Models\Invitation;
+use App\Models\Supplier;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
@@ -35,6 +36,26 @@ it('accepts invitation for existing user', function () {
 
     expect($user->fresh()->distributors()->whereKey($distributor)->exists())->toBeTrue()
         ->and($user->fresh()->getRoleForDistributor($distributor))->toBe(Role::Admin)
+        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+});
+
+it('accepts a supplier-scoped invitation for an existing user', function () {
+    $distributor = Distributor::factory()->create();
+    $supplier = Supplier::factory()->create(['distributor_id' => $distributor->id]);
+    $user = User::factory()->create();
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'supplier_id' => $supplier->id,
+        'email' => $user->email,
+        'role' => Role::Supplier,
+    ]);
+
+    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+
+    $response->assertRedirect(route('filament.dashboard.auth.login'));
+
+    expect($user->fresh()->getRoleForDistributor($distributor))->toBe(Role::Supplier)
+        ->and($user->fresh()->getSupplierIdForDistributor($distributor))->toBe($supplier->id)
         ->and($invitation->fresh()->isAccepted())->toBeTrue();
 });
 
@@ -124,6 +145,36 @@ it('accepts a pending invitation after matching registration', function () {
 
     expect($user)->not->toBeNull()
         ->and($user->distributors()->whereKey($distributor)->exists())->toBeTrue()
+        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+});
+
+it('accepts a supplier-scoped invitation after matching registration', function () {
+    Filament::setCurrentPanel('dashboard');
+
+    $distributor = Distributor::factory()->create();
+    $supplier = Supplier::factory()->create(['distributor_id' => $distributor->id]);
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'supplier_id' => $supplier->id,
+        'email' => 'supplier-user@example.com',
+        'role' => Role::Supplier,
+    ]);
+
+    session(['pending_invitation_token' => $invitation->token]);
+
+    Livewire::test(RegisterPage::class)
+        ->set('data.name', 'Supplier User')
+        ->set('data.email', $invitation->email)
+        ->set('data.password', 'password')
+        ->set('data.passwordConfirmation', 'password')
+        ->call('register')
+        ->assertRedirect(route('filament.dashboard.pages.dashboard', ['tenant' => $distributor->slug]));
+
+    $user = User::where('email', $invitation->email)->first();
+
+    expect($user)->not->toBeNull()
+        ->and($user->getRoleForDistributor($distributor))->toBe(Role::Supplier)
+        ->and($user->getSupplierIdForDistributor($distributor))->toBe($supplier->id)
         ->and($invitation->fresh()->isAccepted())->toBeTrue();
 });
 
