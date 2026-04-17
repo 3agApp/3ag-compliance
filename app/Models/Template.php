@@ -27,6 +27,10 @@ class Template extends Model
     protected static function booted(): void
     {
         static::saved(function (Template $template): void {
+            if (! $template->wasChanged(['required_document_types', 'required_data_fields'])) {
+                return;
+            }
+
             RecalculateProductCompleteness::dispatch($template->getKey());
         });
     }

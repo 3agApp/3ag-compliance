@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Enums\SealStatus;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\RelationManagers\DocumentsRelationManager;
+use App\Jobs\RecalculateProductCompleteness;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Distributor;
@@ -15,6 +16,7 @@ use App\Models\ProductSafetyEntry;
 use App\Models\Supplier;
 use App\Models\Template;
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->distributor = Distributor::factory()->create(['slug' => 'acme-corp']);
@@ -151,6 +153,29 @@ test('updating template requirements refreshes related product completeness', fu
     ]);
 
     expect($product->fresh()->completeness_score)->toBe('100.00');
+});
+
+test('template updates only queue completeness recalculation when requirements change', function () {
+    Queue::fake();
+
+    $template = Template::factory()->create([
+        'distributor_id' => $this->distributor->id,
+        'category_id' => $this->category->id,
+        'required_document_types' => [],
+        'required_data_fields' => [],
+    ]);
+
+    $template->update([
+        'name' => 'Renamed Template',
+    ]);
+
+    Queue::assertNothingPushed();
+
+    $template->update([
+        'required_document_types' => [DocumentType::Manual->value],
+    ]);
+
+    Queue::assertPushed(RecalculateProductCompleteness::class);
 });
 
 test('products can only be submitted for review when fully complete', function () {

@@ -7,6 +7,7 @@ use App\Models\Invitation;
 use App\Models\Supplier;
 use App\Models\User;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 
 it('detects pending expired and accepted invitations', function () {
@@ -20,7 +21,7 @@ it('detects pending expired and accepted invitations', function () {
         ->and($accepted->isAccepted())->toBeTrue();
 });
 
-it('accepts invitation for existing user', function () {
+it('shows a confirmation screen for an existing invited user before accepting', function () {
     $distributor = Distributor::factory()->create();
     $user = User::factory()->create();
     $invitation = Invitation::factory()->create([
@@ -29,7 +30,33 @@ it('accepts invitation for existing user', function () {
         'role' => Role::Admin,
     ]);
 
-    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+    $response = $this->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+        'token' => $invitation->token,
+    ]));
+
+    $response->assertSuccessful()
+        ->assertSee('Accept Invitation')
+        ->assertSee($distributor->name)
+        ->assertSee($invitation->email);
+
+    expect($user->fresh()->distributors()->whereKey($distributor)->exists())->toBeFalse()
+        ->and($invitation->fresh()->isAccepted())->toBeFalse();
+});
+
+it('accepts invitation for existing user after confirmation', function () {
+    $distributor = Distributor::factory()->create();
+    $user = User::factory()->create();
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+        'role' => Role::Admin,
+    ]);
+
+    $this->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+        'token' => $invitation->token,
+    ]))->assertSuccessful();
+
+    $response = $this->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
 
     $response->assertRedirect(route('filament.dashboard.auth.login'));
     $response->assertSessionHas('filament.notifications.0.title', 'Invitation accepted.');
@@ -50,7 +77,11 @@ it('accepts a supplier-scoped invitation for an existing user', function () {
         'role' => Role::Supplier,
     ]);
 
-    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+    $this->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+        'token' => $invitation->token,
+    ]))->assertSuccessful();
+
+    $response = $this->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
 
     $response->assertRedirect(route('filament.dashboard.auth.login'));
 
@@ -67,7 +98,13 @@ it('redirects authenticated invited users to their tenant dashboard', function (
         'email' => $user->email,
     ]);
 
-    $response = $this->actingAs($user)->get(route('invitation.accept', ['token' => $invitation->token]));
+    $this->actingAs($user)
+        ->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+            'token' => $invitation->token,
+        ]))
+        ->assertSuccessful();
+
+    $response = $this->actingAs($user)->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
 
     $response->assertRedirect(route('filament.dashboard.pages.dashboard', ['tenant' => $distributor->slug]));
     $response->assertSessionHas('filament.notifications.0.title', 'Invitation accepted.');
@@ -78,7 +115,11 @@ it('redirects new users to register for invitation acceptance', function () {
         'email' => 'newuser@example.com',
     ]);
 
-    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+    $this->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+        'token' => $invitation->token,
+    ]))->assertSuccessful();
+
+    $response = $this->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
 
     $response->assertRedirect(route('filament.dashboard.auth.register'));
     $response->assertSessionHas('filament.notifications.0.title', 'Please create an account to join the distributor.');
@@ -89,16 +130,20 @@ it('redirects new users to register for invitation acceptance', function () {
 it('rejects expired invitation', function () {
     $invitation = Invitation::factory()->expired()->create();
 
-    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+    $response = $this->get(URL::temporarySignedRoute('invitation.accept', now()->subMinute(), [
+        'token' => $invitation->token,
+    ]));
 
     $response->assertRedirect(route('filament.dashboard.auth.login'));
-    $response->assertSessionHas('filament.notifications.0.title', 'This invitation has expired. Please request a new one.');
+    $response->assertSessionHas('filament.notifications.0.title', 'This invitation link is invalid or has expired.');
 });
 
 it('rejects already accepted invitation', function () {
     $invitation = Invitation::factory()->accepted()->create();
 
-    $response = $this->get(route('invitation.accept', ['token' => $invitation->token]));
+    $response = $this->get(URL::temporarySignedRoute('invitation.accept', now()->addHour(), [
+        'token' => $invitation->token,
+    ]));
 
     $response->assertRedirect(route('filament.dashboard.auth.login'));
     $response->assertSessionHas('filament.notifications.0.title', 'This invitation has already been accepted.');
@@ -113,7 +158,13 @@ it('does not accept an invitation while signed in as a different user', function
         'email' => $invitedUser->email,
     ]);
 
-    $response = $this->actingAs($currentUser)->get(route('invitation.accept', ['token' => $invitation->token]));
+    $this->actingAs($currentUser)
+        ->get(URL::temporarySignedRoute('invitation.accept', $invitation->expires_at, [
+            'token' => $invitation->token,
+        ]))
+        ->assertSuccessful();
+
+    $response = $this->actingAs($currentUser)->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
 
     $response->assertRedirect(route('filament.dashboard.auth.login'));
     $response->assertSessionHas('filament.notifications.0.title', 'Sign in with the invited account to accept this invitation.');
@@ -199,4 +250,21 @@ it('keeps the pending invitation when registration email does not match', functi
     expect($invitation->fresh()->isAccepted())->toBeFalse()
         ->and(session('pending_invitation_token'))->toBeNull()
         ->and(User::where('email', 'wrong@example.com')->exists())->toBeTrue();
+});
+
+it('does not accept an invitation without first opening the signed confirmation page', function () {
+    $distributor = Distributor::factory()->create();
+    $user = User::factory()->create();
+    $invitation = Invitation::factory()->create([
+        'distributor_id' => $distributor->id,
+        'email' => $user->email,
+    ]);
+
+    $response = $this->post(route('invitation.accept.confirm', ['token' => $invitation->token]));
+
+    $response->assertRedirect(route('filament.dashboard.auth.login'));
+    $response->assertSessionHas('filament.notifications.0.title', 'Open the invitation link again before confirming.');
+
+    expect($user->fresh()->distributors()->whereKey($distributor)->exists())->toBeFalse()
+        ->and($invitation->fresh()->isAccepted())->toBeFalse();
 });

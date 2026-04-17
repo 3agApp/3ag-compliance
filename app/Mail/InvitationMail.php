@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\URL;
 
 class InvitationMail extends Mailable implements ShouldQueue
 {
@@ -30,7 +31,11 @@ class InvitationMail extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.invitation',
             with: [
-                'acceptUrl' => route('invitation.accept', ['token' => $this->invitation->token]),
+                'acceptUrl' => URL::temporarySignedRoute(
+                    'invitation.accept',
+                    $this->invitation->expires_at,
+                    ['token' => $this->invitation->token],
+                ),
                 'distributorName' => $this->invitation->distributor->name,
                 'role' => $this->invitation->role->getLabel(),
                 'inviterName' => $this->invitation->inviter?->name ?? 'A team member',

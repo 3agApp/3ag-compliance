@@ -479,9 +479,16 @@ class Product extends Model
 
             $admins->each->notify($notification);
         } else {
-            $this->distributor
+            $distributor = $this->distributor;
+
+            if (! $distributor instanceof Distributor) {
+                return;
+            }
+
+            $distributor
                 ->members()
                 ->get()
+                ->filter(fn (User $user): bool => $user->canAccessProductInDistributor($distributor, $this))
                 ->each->notify($notification);
         }
     }

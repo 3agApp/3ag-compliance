@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 beforeEach(function () {
+    config()->set('media-library.disk_name', 'local');
+
     $this->distributor = Distributor::factory()->create(['slug' => 'acme-corp']);
     $this->owner = User::factory()->create();
 
@@ -48,8 +50,7 @@ beforeEach(function () {
 });
 
 test('a document belongs to a product and can keep multiple media files', function () {
-    Storage::fake('public');
-    config()->set('media-library.disk_name', 'public');
+    Storage::fake('local');
 
     $document = Document::factory()->create([
         'product_id' => $this->product->id,
@@ -75,6 +76,7 @@ test('a document belongs to a product and can keep multiple media files', functi
     expect($document->product->is($this->product))->toBeTrue()
         ->and($document->type)->toBe(DocumentType::Certificate)
         ->and($document->getMedia(Document::FILE_COLLECTION))->toHaveCount(2)
+        ->and($document->getFirstMedia(Document::FILE_COLLECTION)?->disk)->toBe('local')
         ->and($fileNames)->toBe(['appendix.pdf', 'certificate.pdf']);
 });
 
@@ -89,7 +91,7 @@ test('product resource registers documents as an inline relation manager', funct
         ->and(DocumentsRelationManager::canViewForRecord($this->product, EditProduct::class))->toBeTrue();
 });
 
-test('document form uses full width type and grid file upload layout', function () {
+test('document form uses restricted file types and size limits', function () {
     $schema = DocumentForm::configure(Schema::make());
     $components = array_values($schema->getComponents());
 
@@ -100,5 +102,7 @@ test('document form uses full width type and grid file upload layout', function 
         ->and($components[1])->toBeInstanceOf(SpatieMediaLibraryFileUpload::class)
         ->and($components[1]->getName())->toBe('files')
         ->and($components[1]->getColumnSpan())->toBe(['default' => 'full'])
-        ->and($components[1]->getPanelLayout())->toBe('grid');
+        ->and($components[1]->getPanelLayout())->toBe('grid')
+        ->and($components[1]->getAcceptedFileTypes())->toBe(DocumentForm::acceptedFileTypes())
+        ->and($components[1]->getMaxSize())->toBe(10240);
 });

@@ -10,7 +10,6 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
 
 class DocumentsTable
 {
@@ -25,16 +24,9 @@ class DocumentsTable
                     ->searchable(),
                 TextColumn::make('files')
                     ->label('Files')
-                    ->getStateUsing(fn (Document $record): HtmlString => new HtmlString(
-                        $record->getMedia(Document::FILE_COLLECTION)
-                            ->map(fn ($media): string => sprintf(
-                                '<a href="%s" target="_blank" rel="noopener noreferrer" class="text-primary-600 underline">%s</a>',
-                                e($media->getUrl()),
-                                e($media->file_name),
-                            ))
-                            ->implode('<br>') ?: 'No files uploaded'
-                    ))
-                    ->html()
+                    ->getStateUsing(fn (Document $record): string => $record->getMedia(Document::FILE_COLLECTION)
+                        ->pluck('file_name')
+                        ->implode(', ') ?: 'No files uploaded')
                     ->wrap(),
                 TextColumn::make('files_count')
                     ->label('File count')

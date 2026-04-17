@@ -16,7 +16,9 @@ use App\Models\ProductSafetyEntry;
 use App\Models\Supplier;
 use App\Models\Template;
 use App\Models\User;
+use App\Notifications\ProductStatusChanged;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -131,9 +133,32 @@ it('shows relation manager content for documents and safety information on the a
     Livewire::test(EditAdminProduct::class, ['record' => $this->product->getRouteKey()])
         ->assertSee('Documents')
         ->assertSee('manual.pdf')
-        ->assertSee($document->getFirstMediaUrl(Document::FILE_COLLECTION), false)
         ->assertSee('Safety information')
         ->assertSee('Complete');
+});
+
+it('notifies only members who can access the reviewed product', function () {
+    Notification::fake();
+
+    $visibleSupplierUser = User::factory()->create(['email' => 'visible-supplier@example.com']);
+    $otherSupplier = Supplier::factory()->create([
+        'distributor_id' => $this->distributor->id,
+    ]);
+    $hiddenSupplierUser = User::factory()->create(['email' => 'hidden-supplier@example.com']);
+
+    $this->distributor->members()->attach($visibleSupplierUser, [
+        'role' => Role::Supplier->value,
+        'supplier_id' => $this->supplier->id,
+    ]);
+    $this->distributor->members()->attach($hiddenSupplierUser, [
+        'role' => Role::Supplier->value,
+        'supplier_id' => $otherSupplier->id,
+    ]);
+
+    $this->product->requestClarificationByAdmin('Please upload the CE marking certificate.');
+
+    Notification::assertSentTo([$this->systemAdmin, $visibleSupplierUser], ProductStatusChanged::class);
+    Notification::assertNotSentTo($hiddenSupplierUser, ProductStatusChanged::class);
 });
 
 it('clears the clarification note when the product is resubmitted for review', function () {

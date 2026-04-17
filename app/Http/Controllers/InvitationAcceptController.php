@@ -5,14 +5,67 @@ namespace App\Http\Controllers;
 use App\Models\Invitation;
 use App\Models\User;
 use Filament\Notifications\Notification;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class InvitationAcceptController extends Controller
 {
-    public function __invoke(Request $request, string $token): RedirectResponse
+    public function show(Request $request, string $token): View|RedirectResponse
     {
+        $invitation = Invitation::with('distributor')
+            ->where('token', $token)
+            ->firstOrFail();
+
+        if (! $request->hasValidSignature()) {
+            Notification::make()
+                ->danger()
+                ->title('This invitation link is invalid or has expired.')
+                ->send();
+
+            return redirect()->route('filament.dashboard.auth.login');
+        }
+
+        if ($invitation->isAccepted()) {
+            Notification::make()
+                ->warning()
+                ->title('This invitation has already been accepted.')
+                ->send();
+
+            return redirect()->route('filament.dashboard.auth.login');
+        }
+
+        if ($invitation->isExpired()) {
+            Notification::make()
+                ->danger()
+                ->title('This invitation has expired. Please request a new one.')
+                ->send();
+
+            return redirect()->route('filament.dashboard.auth.login');
+        }
+
+        $existingUser = User::where('email', $invitation->email)->first();
+
+        session(['invitation_confirmation_token' => $token]);
+
+        return view('invitations.accept', [
+            'invitation' => $invitation,
+            'existingUser' => $existingUser,
+        ]);
+    }
+
+    public function store(Request $request, string $token): RedirectResponse
+    {
+        if (session('invitation_confirmation_token') !== $token) {
+            Notification::make()
+                ->danger()
+                ->title('Open the invitation link again before confirming.')
+                ->send();
+
+            return redirect()->route('filament.dashboard.auth.login');
+        }
+
         $invitation = Invitation::with('distributor')
             ->where('token', $token)
             ->firstOrFail();
@@ -55,6 +108,7 @@ class InvitationAcceptController extends Controller
             }
 
             $invitation->update(['accepted_at' => now()]);
+            session()->forget('invitation_confirmation_token');
 
             Notification::make()
                 ->success()
@@ -70,6 +124,7 @@ class InvitationAcceptController extends Controller
             return redirect()->route('filament.dashboard.auth.login');
         }
 
+        session()->forget('invitation_confirmation_token');
         session(['pending_invitation_token' => $token]);
 
         Notification::make()

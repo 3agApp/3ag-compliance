@@ -54,6 +54,7 @@ class Document extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection(self::FILE_COLLECTION);
+        $this->addMediaCollection(self::FILE_COLLECTION)
+            ->useDisk((string) config('media-library.disk_name', config('filesystems.default', 'local')));
     }
 }
