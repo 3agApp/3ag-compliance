@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products;
 
 use App\Filament\Resources\Products\Pages\EditAdminProduct;
 use App\Filament\Resources\Products\Pages\ListAdminProducts;
+use App\Filament\Resources\Products\RelationManagers\ComponentsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\SafetyEntriesRelationManager;
 use App\Filament\Resources\Products\Schemas\AdminProductReviewForm;
@@ -55,6 +56,7 @@ class AdminProductResource extends Resource
     public static function getRelations(): array
     {
         return [
+            'components' => ComponentsRelationManager::class,
             'documents' => DocumentsRelationManager::class,
             'safetyEntries' => SafetyEntriesRelationManager::class,
         ];

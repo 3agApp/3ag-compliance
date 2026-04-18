@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
@@ -31,6 +32,7 @@ class ProductForm
         return $schema
             ->components([
                 static::getCompletenessSection(),
+                static::getDocumentAnalysisSection(),
                 static::getCategorySelectionSection(),
                 static::getTemplateSelectionSection(),
                 static::getProductIdentitySection(),
@@ -247,6 +249,19 @@ class ProductForm
                     ->preload()
                     ->searchable()
                     ->disabled(fn (Get $get): bool => blank($get('supplier_id'))),
+            ]);
+    }
+
+    public static function getDocumentAnalysisSection(): Section
+    {
+        return Section::make('AI document analysis')
+            ->description('Run AI analysis across all attached documents and review batch progress, findings, and detected components.')
+            ->columnSpanFull()
+            ->visibleOn('edit')
+            ->schema([
+                View::make('filament.products.partials.document-analysis')
+                    ->poll(config('document-analysis.polling_interval', '5s'))
+                    ->columnSpanFull(),
             ]);
     }
 

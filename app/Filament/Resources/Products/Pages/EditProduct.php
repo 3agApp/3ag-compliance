@@ -4,11 +4,14 @@ namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\Product;
+use App\Services\Documents\ProductDocumentAnalysisService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use LogicException;
+use Throwable;
 
 class EditProduct extends EditRecord
 {
@@ -58,6 +61,40 @@ class EditProduct extends EditRecord
                         ->send();
 
                     $this->refreshFormData(['status', 'completeness_score']);
+                }),
+            Action::make('analyzeDocuments')
+                ->label('Analyse documents')
+                ->icon('heroicon-o-sparkles')
+                ->color('info')
+                ->disabled(fn (): bool => $this->record instanceof Product && $this->record->documentAnalysisRuns()->active()->exists())
+                ->action(function (ProductDocumentAnalysisService $analysisService): void {
+                    if (! ($this->record instanceof Product)) {
+                        return;
+                    }
+
+                    try {
+                        $run = $analysisService->start($this->record, Filament::auth()->user());
+
+                        Notification::make()
+                            ->success()
+                            ->title('Document analysis started')
+                            ->body("Processing {$run->total_documents} documents in {$run->total_batches} batches.")
+                            ->send();
+                    } catch (LogicException $exception) {
+                        Notification::make()
+                            ->warning()
+                            ->title('Document analysis not started')
+                            ->body($exception->getMessage())
+                            ->send();
+                    } catch (Throwable $exception) {
+                        report($exception);
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Document analysis failed to start')
+                            ->body('An unexpected error occurred while starting document analysis.')
+                            ->send();
+                    }
                 }),
             DeleteAction::make(),
         ];

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Products;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
+use App\Filament\Resources\Products\RelationManagers\ComponentsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\Products\RelationManagers\SafetyEntriesRelationManager;
 use App\Filament\Resources\Products\Schemas\ProductForm;
@@ -63,6 +64,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
+            'components' => ComponentsRelationManager::class,
             'documents' => DocumentsRelationManager::class,
             'safetyEntries' => SafetyEntriesRelationManager::class,
         ];

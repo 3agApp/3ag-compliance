@@ -8,6 +8,7 @@ use App\Models\Product;
 use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 
@@ -19,6 +20,7 @@ class AdminProductReviewForm
             ->components([
                 static::getReviewSummarySection(),
                 static::getClarificationNoteSection(),
+                static::getDocumentAnalysisSection(),
                 static::getProductDetailsSection(),
                 static::getComplianceSection(),
                 static::getQrCodeSection(),
@@ -146,6 +148,18 @@ class AdminProductReviewForm
                             : '—'
                     ))
                     ->columnSpan(1),
+            ]);
+    }
+
+    public static function getDocumentAnalysisSection(): Section
+    {
+        return Section::make('AI document analysis')
+            ->description('Review live analysis progress and the latest AI-generated assessment for this product.')
+            ->columnSpanFull()
+            ->schema([
+                View::make('filament.products.partials.document-analysis')
+                    ->poll(config('document-analysis.polling_interval', '5s'))
+                    ->columnSpanFull(),
             ]);
     }
 

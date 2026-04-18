@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\RelationManagers\Documents;
 
 use App\Enums\DocumentType;
 use App\Models\Document;
+use App\Models\Product;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Schemas\Schema;
@@ -33,6 +34,15 @@ class DocumentForm
                     ->native(false)
                     ->required()
                     ->columnSpanFull(),
+                Select::make('product_component_id')
+                    ->label('Component')
+                    ->options(fn ($livewire, ?Document $record): array => static::componentOptions($livewire, $record))
+                    ->placeholder('No component linked')
+                    ->native(false)
+                    ->searchable()
+                    ->preload()
+                    ->helperText('Link this document to a detected or manually created component.')
+                    ->columnSpanFull(),
                 SpatieMediaLibraryFileUpload::make('files')
                     ->label('Files')
                     ->collection(Document::FILE_COLLECTION)
@@ -47,5 +57,24 @@ class DocumentForm
                     ->required()
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected static function componentOptions(mixed $livewire, ?Document $record): array
+    {
+        $ownerRecord = method_exists($livewire, 'getOwnerRecord')
+            ? $livewire->getOwnerRecord()
+            : $record?->product;
+
+        if (! $ownerRecord instanceof Product) {
+            return [];
+        }
+
+        return $ownerRecord->components()
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
     }
 }

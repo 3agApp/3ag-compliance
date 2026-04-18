@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['distributor_id', 'product_id', 'type'])]
+#[Fillable(['distributor_id', 'product_id', 'product_component_id', 'type'])]
 class Document extends Model implements HasMedia
 {
     /** @use HasFactory<DocumentFactory> */
@@ -40,6 +40,11 @@ class Document extends Model implements HasMedia
         return $this->belongsTo(Product::class);
     }
 
+    public function productComponent(): BelongsTo
+    {
+        return $this->belongsTo(ProductComponent::class);
+    }
+
     /**
      * @return array<string, string>
      */
@@ -48,6 +53,7 @@ class Document extends Model implements HasMedia
         return [
             'distributor_id' => 'integer',
             'product_id' => 'integer',
+            'product_component_id' => 'integer',
             'type' => DocumentType::class,
         ];
     }

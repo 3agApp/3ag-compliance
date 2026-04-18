@@ -91,6 +91,21 @@ class Product extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function components(): HasMany
+    {
+        return $this->hasMany(ProductComponent::class);
+    }
+
+    public function documentAnalysisRuns(): HasMany
+    {
+        return $this->hasMany(DocumentAnalysisRun::class);
+    }
+
+    public function latestDocumentAnalysisRun(): HasOne
+    {
+        return $this->hasOne(DocumentAnalysisRun::class)->latestOfMany();
+    }
+
     /**
      * @return array<int, string>
      */

@@ -22,6 +22,11 @@ class DocumentsTable
                     ->formatStateUsing(fn (DocumentType|string|null $state): string => $state instanceof DocumentType ? $state->label() : (DocumentType::tryFrom((string) $state)?->label() ?? (string) $state))
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('productComponent.name')
+                    ->label('Component')
+                    ->placeholder('—')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('files')
                     ->label('Files')
                     ->getStateUsing(fn (Document $record): string => $record->getMedia(Document::FILE_COLLECTION)

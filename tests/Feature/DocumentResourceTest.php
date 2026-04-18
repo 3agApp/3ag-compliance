@@ -95,14 +95,17 @@ test('document form uses restricted file types and size limits', function () {
     $schema = DocumentForm::configure(Schema::make());
     $components = array_values($schema->getComponents());
 
-    expect($components)->toHaveCount(2)
+    expect($components)->toHaveCount(3)
         ->and($components[0])->toBeInstanceOf(Select::class)
         ->and($components[0]->getName())->toBe('type')
         ->and($components[0]->getColumnSpan())->toBe(['default' => 'full'])
-        ->and($components[1])->toBeInstanceOf(SpatieMediaLibraryFileUpload::class)
-        ->and($components[1]->getName())->toBe('files')
+        ->and($components[1])->toBeInstanceOf(Select::class)
+        ->and($components[1]->getName())->toBe('product_component_id')
         ->and($components[1]->getColumnSpan())->toBe(['default' => 'full'])
-        ->and($components[1]->getPanelLayout())->toBe('grid')
-        ->and($components[1]->getAcceptedFileTypes())->toBe(DocumentForm::acceptedFileTypes())
-        ->and($components[1]->getMaxSize())->toBe(10240);
+        ->and($components[2])->toBeInstanceOf(SpatieMediaLibraryFileUpload::class)
+        ->and($components[2]->getName())->toBe('files')
+        ->and($components[2]->getColumnSpan())->toBe(['default' => 'full'])
+        ->and($components[2]->getPanelLayout())->toBe('grid')
+        ->and($components[2]->getAcceptedFileTypes())->toBe(DocumentForm::acceptedFileTypes())
+        ->and($components[2]->getMaxSize())->toBe(10240);
 });
